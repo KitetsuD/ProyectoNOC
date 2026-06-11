@@ -1,0 +1,94 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Carga de datos | ProyectoNOC{% endblock %}
+{% block encabezado %}Carga de datos{% endblock %}
+{% block menu_admin_carga %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="noc-admin-page noc-upload-page">
+    <section class="noc-upload-hero">
+      <div>
+        <span>ADMIN</span>
+        <h2>Excel maestro de ProyectoNOC</h2>
+        <p>Descarga la plantilla completa, actualiza la informacion y sube ese mismo archivo para poblar o actualizar la base.</p>
+      </div>
+      <a class="noc-admin-download" href="{% url 'admin_descargar_plantilla' %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v12"></path>
+          <path d="M7 10l5 5 5-5"></path>
+          <path d="M5 21h14"></path>
+        </svg>
+        <span>Descargar plantilla</span>
+      </a>
+    </section>
+
+    <section class="noc-upload-layout">
+      <article class="noc-upload-guide" aria-label="Estructura del archivo">
+        <div class="noc-upload-guide-head">
+          <strong>Archivo unico permitido</strong>
+          <span>.xlsx / .xlsm / .xls</span>
+        </div>
+        <div class="noc-upload-steps">
+          <div>
+            <span>1</span>
+            <p>Servicios: datos tecnicos, BPI, IP y jornada.</p>
+          </div>
+          <div>
+            <span>2</span>
+            <p>Contactos: hasta los contactos operativos por RBD.</p>
+          </div>
+          <div>
+            <span>3</span>
+            <p>Catalogo_Jornada: referencia de categorias A-E.</p>
+          </div>
+        </div>
+      </article>
+
+      <section class="noc-admin-panel">
+        <div class="noc-admin-panel-head">
+          <div>
+            <span>Carga</span>
+            <h2>Subir Excel maestro</h2>
+          </div>
+        </div>
+
+        <form class="noc-admin-upload-form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="form-non-field-errors">
+              {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="noc-admin-form-grid noc-admin-form-grid-single">
+            <div class="noc-admin-field{% if form.archivo.errors %} has-error{% endif %}">
+              <label for="{{ form.archivo.id_for_label }}">{{ form.archivo.label }}</label>
+              {{ form.archivo }}
+              {% for error in form.archivo.errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="noc-admin-actions">
+            <button class="primary-button" type="submit">Procesar carga</button>
+          </div>
+        </form>
+      </section>
+    </section>
+
+    {% if resultado %}
+      <section class="noc-admin-panel">
+        <div class="noc-admin-panel-head">
+          <div>
+            <span>Resultado</span>
+            <h2>Resumen de carga</h2>
+          </div>
+        </div>
+        <pre class="noc-admin-result">{{ resultado }}</pre>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

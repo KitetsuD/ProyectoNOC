@@ -1,0 +1,136 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Usuarios | ProyectoNOC{% endblock %}
+{% block encabezado %}Usuarios{% endblock %}
+{% block menu_admin_usuarios %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="noc-users-page">
+    <section class="noc-users-hero">
+      <div>
+        <span>ADMIN</span>
+        <h2>Gestion de usuarios</h2>
+        <p>Control de accesos operativos y perfiles del panel NOC.</p>
+      </div>
+      <a class="primary-button noc-users-create" href="{% url 'admin_usuario_crear' %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5v14"></path>
+          <path d="M5 12h14"></path>
+        </svg>
+        Nuevo usuario
+      </a>
+    </section>
+
+    <section class="noc-users-metrics" aria-label="Resumen de usuarios">
+      {% for stat in stats %}
+        <article class="noc-users-metric">
+          <span>{{ stat.label }}</span>
+          <strong>{{ stat.value }}</strong>
+        </article>
+      {% endfor %}
+    </section>
+
+    <section class="noc-users-panel">
+      <div class="noc-users-panel-head">
+        <div>
+          <span>Directorio</span>
+          <h2>Cuentas registradas</h2>
+        </div>
+      </div>
+
+      <div class="noc-users-table-wrap">
+        <table class="noc-users-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Contacto</th>
+              <th>Perfil</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for usuario in usuarios %}
+              <tr>
+                <td>
+                  <div class="noc-user-cell">
+                    <span class="noc-user-avatar">{{ usuario.username|slice:":1"|upper }}</span>
+                    <div>
+                      <strong>{{ usuario.username }}</strong>
+                      <small>ID {{ usuario.id }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ usuario.get_full_name|default:"Sin nombre" }}</strong>
+                    <small>{{ usuario.email|default:"Sin email" }}</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="noc-admin-badge{% if usuario.is_staff %} is-admin{% endif %}">
+                    {% if usuario.is_staff %}ADMIN{% else %}OPERADOR{% endif %}
+                  </span>
+                </td>
+                <td>
+                  <span class="noc-admin-badge{% if usuario.is_active %} is-active{% else %} is-inactive{% endif %}">
+                    {% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}
+                  </span>
+                </td>
+                <td>
+                  <div class="noc-user-actions">
+                    <a class="noc-user-action" href="{% url 'admin_usuario_editar' usuario.id %}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                      </svg>
+                      Editar
+                    </a>
+                    <form method="post" action="{% url 'admin_usuario_accion' usuario.id %}">
+                      {% csrf_token %}
+                      {% if usuario.is_active %}
+                        <button class="noc-user-action is-warning" type="submit" name="accion" value="desactivar">
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M18 6 6 18"></path>
+                            <path d="m6 6 12 12"></path>
+                          </svg>
+                          Desactivar
+                        </button>
+                      {% else %}
+                        <button class="noc-user-action is-ok" type="submit" name="accion" value="activar">
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20 6 9 17l-5-5"></path>
+                          </svg>
+                          Activar
+                        </button>
+                      {% endif %}
+                    </form>
+                    <form method="post" action="{% url 'admin_usuario_accion' usuario.id %}" onsubmit="return confirm('Eliminar usuario {{ usuario.username }}?');">
+                      {% csrf_token %}
+                      <button class="noc-user-action is-danger" type="submit" name="accion" value="eliminar">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 6h18"></path>
+                          <path d="M8 6V4h8v2"></path>
+                          <path d="M19 6l-1 15H6L5 6"></path>
+                          <path d="M10 11v6"></path>
+                          <path d="M14 11v6"></path>
+                        </svg>
+                        Eliminar
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5">
+                  <div class="noc-users-empty">Sin usuarios registrados.</div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+{% endblock %}

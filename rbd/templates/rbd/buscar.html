@@ -1,0 +1,497 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}RBD | ProyectoNOC{% endblock %}
+{% block encabezado %}Consulta RBD{% endblock %}
+{% block menu_rbd %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="rbd-page">
+    <section class="rbd-layout">
+      <aside class="rbd-side-stack">
+        <div class="rbd-picker-card">
+          <form class="rbd-search-form" method="get">
+            <div class="rbd-field">
+              <label for="id_rbd_lateral">RBD</label>
+              <input class="rbd-input" id="id_rbd_lateral" name="rbd" type="number" min="1" value="{{ rbd_consultado }}">
+            </div>
+            <button class="rbd-search-button" type="submit" aria-label="Buscar RBD">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"></path>
+                <path d="M16 16l5 5"></path>
+              </svg>
+            </button>
+            <span class="rbd-search-label">Buscar</span>
+          </form>
+        </div>
+
+        {% if resultado %}
+          <div class="rbd-chip-card">
+            <div class="rbd-chip-title">BPI</div>
+            <div class="rbd-chip-body">
+              <strong>
+                {% include "rbd/partials/copiable_value.html" with value=resultado.bpi|default:"Sin Informacion" label="BPI" %}
+              </strong>
+            </div>
+          </div>
+
+          <div class="rbd-chip-card">
+            <div class="rbd-chip-title">EF</div>
+            <div class="rbd-chip-body">
+              <strong>
+                {% include "rbd/partials/copiable_value.html" with value=resultado.codigo_servicio_oss|default:"Sin codigo OSS" label="EF" %}
+              </strong>
+            </div>
+          </div>
+
+          <div class="rbd-chip-card">
+            <div class="rbd-chip-title">IP</div>
+            <div class="rbd-chip-body">
+              <strong>
+                {% include "rbd/partials/copiable_value.html" with value=resultado.ip|default:"Sin informacion" label="IP" %}
+              </strong>
+            </div>
+          </div>
+
+          <div class="rbd-chip-card rbd-jornada-card">
+            <div class="rbd-chip-title">Jornada</div>
+            <div class="rbd-jornada-body">
+              <div class="rbd-jornada-head">
+                <strong>{{ resultado.jornada_descripcion|default:"Sin informacion" }}</strong>
+                {% if resultado.jornada_categoria %}
+                  <span>{{ resultado.jornada_categoria }}</span>
+                {% endif %}
+              </div>
+              <p>{{ resultado.jornada_horario|default:"Horario no informado" }}</p>
+            </div>
+          </div>
+        {% endif %}
+      </aside>
+
+      <div class="rbd-results">
+        {% if resultado %}
+          <div class="rbd-top-grid rbd-compact-top-grid">
+            <div class="rbd-info-column">
+              <section class="rbd-category">
+                <div class="rbd-category-heading">
+                  <h2>Informacion del Colegio</h2>
+                </div>
+
+                <article class="rbd-card rbd-card-orange">
+                  <header class="rbd-card-header">
+                    <h2>Datos del colegio</h2>
+                  </header>
+                  <dl class="rbd-info-grid atomized">
+                    {% for item in colegio %}
+                      <div>
+                        <dt>{{ item.label }}</dt>
+                        <dd>
+                          {% include "rbd/partials/copiable_value.html" with value=item.value label=item.label %}
+                        </dd>
+                      </div>
+                    {% endfor %}
+                  </dl>
+                </article>
+              </section>
+
+              <section class="rbd-category">
+                <div class="rbd-category-heading">
+                  <h2>Informacion del Servicio</h2>
+                </div>
+
+                <article class="rbd-card rbd-card-blue">
+                  <header class="rbd-card-header">
+                    <h2>Datos del servicio</h2>
+                    <span>{{ resultado.tecnologia_resumen }}</span>
+                  </header>
+                  <dl class="rbd-info-grid service">
+                    {% for item in servicio %}
+                      <div>
+                        <dt>{{ item.label }}</dt>
+                        <dd>
+                          {% include "rbd/partials/copiable_value.html" with value=item.value label=item.label %}
+                        </dd>
+                      </div>
+                    {% endfor %}
+                  </dl>
+                </article>
+              </section>
+            </div>
+
+            <section class="rbd-category rbd-contact-category" id="contactos">
+              <div class="rbd-category-heading">
+                <h2>Contactos</h2>
+              </div>
+
+              <article class="rbd-card rbd-contact-card">
+                <header class="rbd-card-header rbd-contact-card-header">
+                  <div>
+                    <h2>Contactos</h2>
+                    <span class="rbd-contact-state" data-contact-state>Solo lectura</span>
+                  </div>
+                  <button class="rbd-contact-edit-toggle" type="button" data-contact-edit-toggle>Editar</button>
+                </header>
+                <form class="rbd-contact-editor is-readonly" method="post" data-contact-editor>
+                  {% csrf_token %}
+                  <input type="hidden" name="accion" value="guardar_contactos">
+                  <input type="hidden" name="rbd" value="{{ resultado.rbd }}">
+                  <div class="rbd-contact-grid editable">
+                    {% for contacto in contactos %}
+                      <div class="rbd-contact-block rbd-contact-edit">
+                        <div class="rbd-contact-title-row">
+                          <h3>{{ contacto.role }}</h3>
+                          <span>CT{{ contacto.orden }}</span>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label for="contacto_{{ contacto.orden }}_nombre">Nombre</label>
+                          <input id="contacto_{{ contacto.orden }}_nombre" name="contacto_{{ contacto.orden }}_nombre" value="{{ contacto.nombre }}" autocomplete="off" disabled data-contact-input>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label for="contacto_{{ contacto.orden }}_telefono">Telefono</label>
+                          <input id="contacto_{{ contacto.orden }}_telefono" name="contacto_{{ contacto.orden }}_telefono" value="{{ contacto.telefono }}" autocomplete="off" disabled data-contact-input>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label for="contacto_{{ contacto.orden }}_celular">Celular</label>
+                          <input id="contacto_{{ contacto.orden }}_celular" name="contacto_{{ contacto.orden }}_celular" value="{{ contacto.celular }}" autocomplete="off" disabled data-contact-input>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label for="contacto_{{ contacto.orden }}_email">Email</label>
+                          <input id="contacto_{{ contacto.orden }}_email" name="contacto_{{ contacto.orden }}_email" value="{{ contacto.email }}" autocomplete="off" disabled data-contact-input>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label for="contacto_{{ contacto.orden }}_cargo">Cargo</label>
+                          <input id="contacto_{{ contacto.orden }}_cargo" name="contacto_{{ contacto.orden }}_cargo" value="{{ contacto.cargo }}" autocomplete="off" disabled data-contact-input>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="rbd-contact-actions" data-contact-actions hidden>
+                    <button class="ghost-button" type="button" data-contact-cancel>Cancelar</button>
+                    <button class="primary-button" type="submit">Guardar cambios</button>
+                  </div>
+                </form>
+              </article>
+            </section>
+          </div>
+          <section class="rbd-category">
+            <div class="rbd-category-heading">
+              <h2>Copiar completo</h2>
+            </div>
+
+            <article class="rbd-full-copy-card">
+              <header class="rbd-full-copy-header">
+                <div class="rbd-full-copy-title">
+                  <h2>Formato operativo</h2>
+                  <span>Seguimiento y escalamiento</span>
+                </div>
+                <button class="rbd-full-copy-button" type="button" data-copy-source="rbdFullCopyText" aria-label="Copiar formato completo" title="Copiar formato completo">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 8h10v12H8Z"></path>
+                    <path d="M5 16H4V4h12v1"></path>
+                  </svg>
+                  Copiar todo
+                </button>
+              </header>
+              <div class="rbd-full-copy-grid" aria-label="Formato completo para copiar">
+                {% for row in copiar_completo %}
+                  <div class="rbd-full-copy-label{% if not row.label %} is-gap{% endif %}">{{ row.label }}</div>
+                  <div class="rbd-full-copy-value{% if not row.label %} is-gap{% endif %}">{{ row.value }}</div>
+                {% endfor %}
+              </div>
+              <textarea id="rbdFullCopyText" hidden>{{ copiar_completo_texto }}</textarea>
+            </article>
+          </section>
+        {% elif busqueda_realizada %}
+          <section class="rbd-empty-state rbd-not-found">
+            <h2>RBD no encontrado</h2>
+            <p>No existe un registro cargado para el RBD {{ rbd_consultado }}.</p>
+          </section>
+        {% else %}
+          <section class="rbd-preview-state" aria-label="Vista previa de ficha RBD">
+            <div class="rbd-preview-head">
+              <div>
+                <span>Ficha tecnica</span>
+                <h2>Consulta RBD</h2>
+              </div>
+              <strong>{{ total_rbd }} registros disponibles</strong>
+            </div>
+
+            <div class="rbd-top-grid rbd-compact-top-grid rbd-preview-layout">
+              <div class="rbd-info-column">
+                <section class="rbd-category">
+                  <div class="rbd-category-heading">
+                    <h2>Informacion del Colegio</h2>
+                  </div>
+                  <article class="rbd-card rbd-card-orange rbd-preview-card">
+                    <header class="rbd-card-header">
+                      <h2>Datos del colegio</h2>
+                    </header>
+                    <dl class="rbd-info-grid atomized">
+                      <div>
+                        <dt>RBD</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Nombre</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Direccion</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Localidad</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Region</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Zona</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Zonal</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Matricula</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Latitud</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Longitud</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Colegio Especial</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                    </dl>
+                  </article>
+                </section>
+
+                <section class="rbd-category">
+                  <div class="rbd-category-heading">
+                    <h2>Informacion del Servicio</h2>
+                  </div>
+                  <article class="rbd-card rbd-card-blue rbd-preview-card">
+                    <header class="rbd-card-header">
+                      <h2>Datos del servicio</h2>
+                      <span>Servicio</span>
+                    </header>
+                    <dl class="rbd-info-grid service">
+                      <div>
+                        <dt>Tecnologia Actual</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Tipo Tecnologia</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Nodo</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>VLAN</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Puerta</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Dependencia MPLS</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>BW Nacional</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>BW Internacional</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>BW bajada</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                      <div>
+                        <dt>Codigo OSS</dt>
+                        <dd><span class="rbd-preview-line"></span></dd>
+                      </div>
+                    </dl>
+                  </article>
+                </section>
+              </div>
+
+              <section class="rbd-category rbd-contact-category">
+                <div class="rbd-category-heading">
+                  <h2>Contactos</h2>
+                </div>
+                <article class="rbd-card rbd-contact-card rbd-preview-card">
+                  <header class="rbd-card-header rbd-contact-card-header">
+                    <div>
+                      <h2>Contactos</h2>
+                      <span class="rbd-contact-state">Solo lectura</span>
+                    </div>
+                  </header>
+                  <div class="rbd-contact-grid editable">
+                      <div class="rbd-contact-block rbd-contact-edit">
+                        <div class="rbd-contact-title-row">
+                          <h3>Contacto 1</h3>
+                          <span>CT1</span>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Nombre</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Telefono</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Celular</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Email</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Cargo</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                      </div>
+                      <div class="rbd-contact-block rbd-contact-edit">
+                        <div class="rbd-contact-title-row">
+                          <h3>Contacto 2</h3>
+                          <span>CT2</span>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Nombre</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Telefono</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Celular</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Email</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Cargo</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                      </div>
+                      <div class="rbd-contact-block rbd-contact-edit">
+                        <div class="rbd-contact-title-row">
+                          <h3>Contacto 3</h3>
+                          <span>CT3</span>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Nombre</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Telefono</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Celular</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Email</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                        <div class="rbd-contact-field">
+                          <label>Cargo</label>
+                          <div class="rbd-preview-input"></div>
+                        </div>
+                      </div>
+                  </div>
+                </article>
+              </section>
+            </div>
+
+            <section class="rbd-category">
+              <div class="rbd-category-heading">
+                <h2>Copiar completo</h2>
+              </div>
+              <article class="rbd-full-copy-card rbd-preview-copy">
+                <header class="rbd-full-copy-header">
+                  <div class="rbd-full-copy-title">
+                    <h2>Formato operativo</h2>
+                    <span>Se habilita al buscar un RBD</span>
+                  </div>
+                </header>
+              </article>
+            </section>
+          </section>
+        {% endif %}
+      </div>
+    </section>
+  </section>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    (function () {
+      const editor = document.querySelector("[data-contact-editor]");
+      if (!editor) return;
+
+      const toggle = document.querySelector("[data-contact-edit-toggle]");
+      const cancel = document.querySelector("[data-contact-cancel]");
+      const actions = document.querySelector("[data-contact-actions]");
+      const state = document.querySelector("[data-contact-state]");
+      const inputs = Array.from(editor.querySelectorAll("[data-contact-input]"));
+
+      function setEditMode(enabled) {
+        inputs.forEach((input) => {
+          input.disabled = !enabled;
+        });
+        editor.classList.toggle("is-editing", enabled);
+        editor.classList.toggle("is-readonly", !enabled);
+        if (actions) actions.hidden = !enabled;
+        if (toggle) {
+          toggle.hidden = enabled;
+          toggle.setAttribute("aria-expanded", String(enabled));
+        }
+        if (state) state.textContent = enabled ? "Editando" : "Solo lectura";
+      }
+
+      if (toggle) {
+        toggle.addEventListener("click", function () {
+          setEditMode(true);
+          const firstInput = inputs.find((input) => !input.disabled);
+          if (firstInput) firstInput.focus();
+        });
+      }
+
+      if (cancel) {
+        cancel.addEventListener("click", function () {
+          editor.reset();
+          setEditMode(false);
+        });
+      }
+
+      editor.addEventListener("submit", function () {
+        inputs.forEach((input) => {
+          input.disabled = false;
+        });
+      });
+
+      setEditMode(false);
+    })();
+  </script>
+{% endblock %}

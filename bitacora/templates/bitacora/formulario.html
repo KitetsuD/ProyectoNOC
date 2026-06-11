@@ -1,0 +1,175 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Bitacora | ProyectoNOC{% endblock %}
+{% block encabezado %}Agendamiento Bitacora{% endblock %}
+{% block menu_bitacora %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="bitacora-page bitacora-page-simple">
+    <form class="bitacora-form bitacora-card bitacora-form-card" method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="bitacora-card-header">
+        <div>
+          <span class="bitacora-kicker">Bitacora</span>
+          <h2>Nueva agenda</h2>
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="form-non-field-errors">
+          {% for error in form.non_field_errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="bitacora-form-grid">
+        <div class="form-question{% if form.ticket.errors %} has-error{% endif %}">
+          <label for="{{ form.ticket.id_for_label }}">Ticket <span class="required-mark">*</span></label>
+          {{ form.ticket }}
+          {% for error in form.ticket.errors %}
+            <p class="form-error">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="form-question{% if form.rbd.errors %} has-error{% endif %}">
+          <label for="{{ form.rbd.id_for_label }}">RBD <span class="required-mark">*</span></label>
+          {{ form.rbd }}
+          {% for error in form.rbd.errors %}
+            <p class="form-error">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="form-question is-wide{% if form.vinculo_ticket.errors %} has-error{% endif %}">
+          <label for="{{ form.vinculo_ticket.id_for_label }}">Vinculo Ticket <span class="required-mark">*</span></label>
+          {{ form.vinculo_ticket }}
+          {% for error in form.vinculo_ticket.errors %}
+            <p class="form-error">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="form-question{% if form.dia.errors %} has-error{% endif %}">
+          <label for="{{ form.dia.id_for_label }}">Dia <span class="required-mark">*</span></label>
+          {{ form.dia }}
+          {% for error in form.dia.errors %}
+            <p class="form-error">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="form-question{% if form.hora.errors %} has-error{% endif %}">
+          <label for="{{ form.hora.id_for_label }}">Hora <span class="required-mark">*</span></label>
+          {{ form.hora }}
+          {% for error in form.hora.errors %}
+            <p class="form-error">{{ error }}</p>
+          {% endfor %}
+          <p class="form-error hora-disponibilidad" id="horaDisponibilidad" hidden>Hora no disponible</p>
+        </div>
+
+        <div class="form-question is-wide weekend-option{% if form.es_fin_de_semana.errors %} has-error{% endif %}">
+          <label class="weekend-option-label" for="{{ form.es_fin_de_semana.id_for_label }}">
+            {{ form.es_fin_de_semana }}
+            <span class="weekend-option-control" aria-hidden="true"></span>
+            <span class="weekend-option-copy">
+              <strong>Agenda de fin de semana</strong>
+              <small>Marca esta opcion para destacarla con otro color en el calendario.</small>
+            </span>
+          </label>
+          {% for error in form.es_fin_de_semana.errors %}
+            <p class="form-error">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="primary-button" type="submit">Agendar</button>
+        <button class="ghost-button" type="reset">Limpiar</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    (function () {
+      const form = document.querySelector(".bitacora-form-card");
+      const diaInput = document.getElementById("{{ form.dia.id_for_label }}");
+      const horaInput = document.getElementById("{{ form.hora.id_for_label }}");
+      const aviso = document.getElementById("horaDisponibilidad");
+      const submit = document.querySelector(".bitacora-form-card button[type='submit']");
+      const weekendInput = document.getElementById("{{ form.es_fin_de_semana.id_for_label }}");
+      const disponibilidadUrl = "{% url 'bitacora:disponibilidad' %}";
+      let ocupadas = new Set({{ horas_ocupadas_json|safe }});
+      let weekendTouched = Boolean(weekendInput && weekendInput.checked);
+
+      function normalizarHora(valor) {
+        return (valor || "").slice(0, 5);
+      }
+
+      function revisarHora() {
+        const hora = normalizarHora(horaInput ? horaInput.value : "");
+        const noDisponible = Boolean(hora && ocupadas.has(hora));
+        if (aviso) {
+          aviso.hidden = !noDisponible;
+        }
+        if (horaInput) {
+          horaInput.closest(".form-question").classList.toggle("has-error", noDisponible);
+        }
+        if (submit) {
+          submit.disabled = noDisponible;
+        }
+      }
+
+      function sugerirFinDeSemana() {
+        if (!diaInput || !weekendInput || weekendTouched || !diaInput.value) {
+          return;
+        }
+        const partes = diaInput.value.split("-").map(Number);
+        const fecha = new Date(partes[0], partes[1] - 1, partes[2]);
+        const diaSemana = fecha.getDay();
+        weekendInput.checked = diaSemana === 0 || diaSemana === 6;
+      }
+
+      async function cargarDisponibilidad() {
+        if (!diaInput || !diaInput.value) {
+          ocupadas = new Set();
+          sugerirFinDeSemana();
+          revisarHora();
+          return;
+        }
+        const respuesta = await fetch(`${disponibilidadUrl}?dia=${encodeURIComponent(diaInput.value)}`);
+        const data = await respuesta.json();
+        ocupadas = new Set(data.ocupadas || []);
+        sugerirFinDeSemana();
+        revisarHora();
+      }
+
+      if (diaInput) {
+        diaInput.addEventListener("change", function () {
+          sugerirFinDeSemana();
+          cargarDisponibilidad();
+        });
+      }
+      if (horaInput) {
+        horaInput.addEventListener("input", revisarHora);
+      }
+      if (weekendInput) {
+        weekendInput.addEventListener("change", function () {
+          weekendTouched = true;
+        });
+      }
+      if (form) {
+        form.addEventListener("reset", function () {
+          window.setTimeout(function () {
+            weekendTouched = false;
+            sugerirFinDeSemana();
+            cargarDisponibilidad();
+          }, 0);
+        });
+      }
+
+      sugerirFinDeSemana();
+      revisarHora();
+    })();
+  </script>
+{% endblock %}

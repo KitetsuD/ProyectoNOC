@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acceso Diario | ProyectoNOC</title>
+  <style>
+    :root {
+      --bg: #f7fafc;
+      --ink: #142033;
+      --muted: #687588;
+      --panel: #ffffff;
+      --line: #dae3ec;
+      --teal: #0f766e;
+      --teal-soft: #e2f7f2;
+      --blue: #1d4ed8;
+      --rose: #be123c;
+      --rose-soft: #fff1f2;
+      --gold: #b7791f;
+      --shadow: 0 18px 44px rgba(15, 23, 42, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    input,
+    button {
+      font: inherit;
+    }
+
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+    }
+
+    .rail {
+      min-height: 100vh;
+      padding: 24px;
+      border-right: 1px solid var(--line);
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 30px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: var(--teal);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .rail-section {
+      margin-top: 34px;
+    }
+
+    .rail-title {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .queue-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .queue-item {
+      min-height: 68px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .queue-item strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .queue-item span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .queue-value {
+      min-width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: var(--blue);
+      background: #eff6ff;
+      font-weight: 900;
+    }
+
+    .proposal-switch {
+      display: grid;
+      gap: 8px;
+    }
+
+    .proposal-switch a {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--muted);
+      background: #ffffff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .proposal-switch a.active {
+      color: #ffffff;
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    .content {
+      padding: 32px 28px;
+      display: grid;
+      place-items: center;
+    }
+
+    .card {
+      width: min(100%, 520px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 26px 28px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, var(--teal-soft), transparent),
+        #ffffff;
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .status-pill {
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 11px;
+      color: #166534;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .card-header h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .card-header p {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .card-body {
+      padding: 28px;
+    }
+
+    .error-box {
+      border: 1px solid #fecdd3;
+      background: var(--rose-soft);
+      color: var(--rose);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #334155;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      padding: 0 13px;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.14);
+    }
+
+    .submit-button {
+      width: 100%;
+      min-height: 48px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--teal);
+      color: #ffffff;
+      font-weight: 900;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .submit-button:hover,
+    .submit-button:focus {
+      background: #115e59;
+    }
+
+    .card-footer {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card-footer a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .rail {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .rail-bottom {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .rail,
+      .content {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .card-header,
+      .card-body {
+        padding: 22px;
+      }
+
+      .status-line,
+      .card-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <aside class="rail" aria-label="Resumen lateral">
+      <div>
+        <div class="brand">
+          <div class="brand-mark">N</div>
+          <div>
+            <strong>ProyectoNOC</strong>
+            <span>NOC Cliente GTD</span>
+          </div>
+        </div>
+
+        <section class="rail-section">
+          <p class="rail-title">Turno actual</p>
+          <div class="queue-list">
+            <div class="queue-item">
+              <div>
+                <strong>Gestiones</strong>
+                <span>Registros del dia</span>
+              </div>
+              <div class="queue-value">0</div>
+            </div>
+            <div class="queue-item">
+              <div>
+                <strong>Pendientes</strong>
+                <span>Llamados y tickets</span>
+              </div>
+              <div class="queue-value">0</div>
+            </div>
+            <div class="queue-item">
+              <div>
+                <strong>Manuales</strong>
+                <span>Documentos cargados</span>
+              </div>
+              <div class="queue-value">0</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="rail-bottom">
+        <p class="rail-title">Propuestas</p>
+        <nav class="proposal-switch" aria-label="Propuestas de login">
+          <a href="{% url 'login' %}">Propuesta 1</a>
+          <a href="{% url 'login_propuesta_2' %}">Propuesta 2</a>
+          <a class="active" href="{% url 'login_propuesta_3' %}">Propuesta 3</a>
+          <a href="{% url 'login_propuesta_4' %}">Propuesta 4</a>
+        </nav>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="card">
+        <div class="card-header">
+          <div class="status-line">
+            <span class="status-pill">Acceso protegido</span>
+            <span>NOC Cliente</span>
+          </div>
+          <h1>Ingreso diario</h1>
+          <p>Acceso compacto para colaboradores, supervisores y administradores.</p>
+        </div>
+
+        <div class="card-body">
+          {% if form.errors %}
+            <div class="error-box">Usuario o contrasena no validos.</div>
+          {% endif %}
+
+          <form method="post" action="{{ request.path }}" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <div class="field">
+              <label for="id_username">Usuario</label>
+              <input id="id_username" type="text" name="username" value="{{ form.username.value|default_if_none:'' }}" autocomplete="username" required autofocus>
+            </div>
+            <div class="field">
+              <label for="id_password">Contrasena</label>
+              <input id="id_password" type="password" name="password" autocomplete="current-password" required>
+            </div>
+            <button class="submit-button" type="submit">Entrar</button>
+          </form>
+
+          <div class="card-footer">
+            <span>Ambiente de desarrollo</span>
+            <a href="{% url 'admin:index' %}">Admin Django</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

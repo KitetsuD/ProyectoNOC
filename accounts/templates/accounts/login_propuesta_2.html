@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ingreso Operativo | ProyectoNOC</title>
+  <style>
+    :root {
+      --bg: #edf2f7;
+      --ink: #172033;
+      --muted: #667085;
+      --panel: #ffffff;
+      --line: #d8e1eb;
+      --console: #20242c;
+      --console-soft: #2d323b;
+      --teal: #0f766e;
+      --teal-soft: #d9f5ef;
+      --blue: #2563eb;
+      --amber: #b45309;
+      --red: #be123c;
+      --shadow: 0 20px 48px rgba(15, 23, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(90deg, rgba(15, 118, 110, 0.10), transparent 34%),
+        linear-gradient(180deg, rgba(37, 99, 235, 0.07), transparent 44%),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    input,
+    button {
+      font: inherit;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      min-height: 68px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      background: var(--teal);
+      font-weight: 900;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .proposal-switch {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .proposal-switch a {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--muted);
+      background: #ffffff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .proposal-switch a.active {
+      color: #ffffff;
+      background: var(--console);
+      border-color: var(--console);
+    }
+
+    .main {
+      max-width: 1180px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 34px 24px 44px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.22fr) minmax(340px, 410px);
+      align-items: stretch;
+      gap: 22px;
+    }
+
+    .operations {
+      background: var(--console);
+      color: #f8fafc;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 590px;
+    }
+
+    .operations-header {
+      padding: 22px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .operations-header h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .live-pill {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 12px;
+      color: #bbf7d0;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(187, 247, 208, 0.24);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .operations-grid {
+      padding: 22px 24px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-content: start;
+    }
+
+    .metric {
+      min-height: 128px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: var(--console-soft);
+      border-radius: 8px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric span {
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      font-size: 34px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .metric em {
+      color: #99f6e4;
+      font-size: 13px;
+      font-style: normal;
+    }
+
+    .timeline {
+      margin: 0 24px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .timeline-row {
+      min-height: 52px;
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      font-size: 14px;
+    }
+
+    .timeline-row:last-child {
+      border-bottom: 0;
+    }
+
+    .timeline-row strong {
+      color: #99f6e4;
+      font-size: 13px;
+    }
+
+    .timeline-row span:last-child {
+      color: #fcd34d;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .auth-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .auth-panel h2 {
+      margin: 0 0 6px;
+      font-size: 27px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .auth-panel p {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .error-box {
+      border: 1px solid #fecdd3;
+      background: #fff1f2;
+      color: var(--red);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #334155;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      padding: 0 13px;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.15);
+    }
+
+    .submit-button {
+      width: 100%;
+      min-height: 48px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--teal);
+      color: #ffffff;
+      font-weight: 900;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .submit-button:hover,
+    .submit-button:focus {
+      background: #115e59;
+    }
+
+    .auth-footer {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .auth-footer a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    @media (max-width: 920px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .operations {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .topbar-inner,
+      .main {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding-top: 14px;
+        padding-bottom: 14px;
+      }
+
+      .proposal-switch {
+        justify-content: flex-start;
+      }
+
+      .operations-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .operations-grid,
+      .timeline-row {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-row {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        gap: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark">N</div>
+          <div>
+            <strong>ProyectoNOC</strong>
+            <span>Acceso operativo</span>
+          </div>
+        </div>
+        <nav class="proposal-switch" aria-label="Propuestas de login">
+          <a href="{% url 'login' %}">Propuesta 1</a>
+          <a class="active" href="{% url 'login_propuesta_2' %}">Propuesta 2</a>
+          <a href="{% url 'login_propuesta_3' %}">Propuesta 3</a>
+          <a href="{% url 'login_propuesta_4' %}">Propuesta 4</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="operations" aria-label="Estado operativo">
+        <div class="operations-header">
+          <h1>Centro de control NOC Cliente</h1>
+          <span class="live-pill">PostgreSQL activo</span>
+        </div>
+        <div class="operations-grid">
+          <article class="metric">
+            <span>Enlaces monitoreados</span>
+            <strong>0</strong>
+            <em>Modulo pendiente</em>
+          </article>
+          <article class="metric">
+            <span>Llamados pendientes</span>
+            <strong>0</strong>
+            <em>Modulo pendiente</em>
+          </article>
+          <article class="metric">
+            <span>Tickets seguidos</span>
+            <strong>0</strong>
+            <em>Modulo pendiente</em>
+          </article>
+          <article class="metric">
+            <span>Derivaciones</span>
+            <strong>0</strong>
+            <em>Modulo pendiente</em>
+          </article>
+        </div>
+        <div class="timeline">
+          <div class="timeline-row">
+            <strong>Clientes</strong>
+            <span>Contactos y enlaces asociados</span>
+            <span>Base</span>
+          </div>
+          <div class="timeline-row">
+            <strong>Bitacora</strong>
+            <span>Gestiones con usuario, fecha y estado</span>
+            <span>Traza</span>
+          </div>
+          <div class="timeline-row">
+            <strong>Manuales</strong>
+            <span>Procedimientos operativos centralizados</span>
+            <span>Soporte</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="auth-panel" aria-label="Formulario de ingreso">
+        <h2>Ingreso al turno</h2>
+        <p>Usa tu cuenta para acceder al panel protegido de ProyectoNOC.</p>
+
+        {% if form.errors %}
+          <div class="error-box">Usuario o contrasena no validos.</div>
+        {% endif %}
+
+        <form method="post" action="{{ request.path }}" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+          <div class="field">
+            <label for="id_username">Usuario</label>
+            <input id="id_username" type="text" name="username" value="{{ form.username.value|default_if_none:'' }}" autocomplete="username" required autofocus>
+          </div>
+          <div class="field">
+            <label for="id_password">Contrasena</label>
+            <input id="id_password" type="password" name="password" autocomplete="current-password" required>
+          </div>
+          <button class="submit-button" type="submit">Entrar</button>
+        </form>
+
+        <div class="auth-footer">
+          <span>Ambiente de desarrollo</span>
+          <a href="{% url 'admin:index' %}">Admin Django</a>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

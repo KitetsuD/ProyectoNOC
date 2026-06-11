@@ -1,0 +1,160 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Calendario | ProyectoNOC{% endblock %}
+{% block encabezado %}Calendario{% endblock %}
+{% block menu_calendario %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="calendar-page">
+    <section class="month-calendar-board">
+      <div class="calendar-board-head calendar-google-head">
+        <div class="calendar-google-nav">
+          <a class="calendar-today-button" href="{% url 'bitacora:calendario' %}">Hoy</a>
+          <a class="calendar-icon-button" href="{% url 'bitacora:calendario' %}?dia={{ prev_month_iso }}" aria-label="Mes anterior">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6"></path>
+            </svg>
+          </a>
+          <a class="calendar-icon-button" href="{% url 'bitacora:calendario' %}?dia={{ next_month_iso }}" aria-label="Mes siguiente">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </a>
+          <div class="calendar-google-title">
+            <h2>{{ month_label|date:"F Y"|capfirst }}</h2>
+            <span>Agenda mensual</span>
+          </div>
+        </div>
+        <a class="calendar-create-button" href="{% url 'bitacora:crear' %}?dia={{ dia_calendario_iso }}">Nueva agenda</a>
+      </div>
+      <div class="month-weekdays" aria-hidden="true">
+        {% for day_name in weekdays %}
+          <span>{{ day_name }}</span>
+        {% endfor %}
+      </div>
+      <div class="month-grid">
+        {% for week in month_weeks %}
+          {% for day in week %}
+            <article class="month-day{% if not day.is_current_month %} is-muted{% endif %}{% if day.records %} has-bookings{% endif %}{% if day.has_weekend_bookings %} has-weekend-bookings{% endif %}{% if day.is_today %} is-today{% endif %}{% if day.is_selected %} is-selected{% endif %}">
+              <button class="month-day-button" type="button" data-modal-target="{{ day.modal_id }}" aria-label="Ver agenda del {{ day.date|date:'d/m/Y' }}">
+                <span class="month-day-top">
+                  <span class="month-day-number">{{ day.day }}</span>
+                  {% if day.records %}
+                    <span class="month-day-status">{{ day.ocupadas }} agendada{% if day.ocupadas != 1 %}s{% endif %}</span>
+                  {% else %}
+                    <span class="month-day-status is-free">Libre</span>
+                  {% endif %}
+                </span>
+                <span class="month-day-body">
+                  {% if day.records %}
+                    {% for registro in day.records|slice:":2" %}
+                      <span class="month-day-event{% if registro.es_fin_de_semana %} is-weekend{% endif %}">
+                        <strong>{{ registro.hora|time:"H:i" }}</strong>
+                        <span>{{ registro.ticket }}</span>
+                      </span>
+                    {% endfor %}
+                    {% if day.ocupadas > 2 %}
+                      <span class="month-day-more">+{{ day.ocupadas|add:"-2" }} mas</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="month-day-empty">Sin agendamientos</span>
+                    <span class="month-day-free-count">{{ day.disponibles }} bloques disponibles</span>
+                  {% endif %}
+                </span>
+              </button>
+              <div class="month-day-popover" role="tooltip">
+                <strong>{{ day.date|date:"d/m/Y" }}</strong>
+                {% if day.records %}
+                  <span>{{ day.ocupadas }} hora{% if day.ocupadas != 1 %}s{% endif %} agendada{% if day.ocupadas != 1 %}s{% endif %}</span>
+                  <ul>
+                    {% for registro in day.records|slice:":3" %}
+                      <li{% if registro.es_fin_de_semana %} class="is-weekend"{% endif %}>{{ registro.hora|time:"H:i" }} - {{ registro.ticket }}{% if registro.es_fin_de_semana %} - Fin de semana{% endif %}</li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span>Sin agendamientos</span>
+                  <small>{{ day.disponibles }} bloques disponibles</small>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="day-modal-layer" data-modal-layer hidden>
+      {% for week in month_weeks %}
+        {% for day in week %}
+          <section class="day-modal" id="{{ day.modal_id }}" role="dialog" aria-modal="true" aria-labelledby="{{ day.modal_id }}_title" hidden>
+            <div class="day-modal-head">
+              <div>
+                <span>Agenda del dia</span>
+                <h2 id="{{ day.modal_id }}_title">{{ day.date|date:"d/m/Y" }}</h2>
+              </div>
+              <button class="day-modal-close" type="button" data-modal-close aria-label="Cerrar">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l12 12"></path>
+                  <path d="M18 6L6 18"></path>
+                </svg>
+              </button>
+            </div>
+            {% if day.records %}
+              <ul class="day-modal-list">
+                {% for registro in day.records %}
+                  <li{% if registro.es_fin_de_semana %} class="is-weekend"{% endif %}>
+                    <strong>{{ registro.hora|time:"H:i" }}</strong>
+                    <div>
+                      <span>{{ registro.ticket }} / RBD {{ registro.rbd }}</span>
+                      <small>{{ registro.usuario.username }}{% if registro.es_fin_de_semana %} - Fin de semana{% endif %}</small>
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="day-modal-empty">Sin agendamientos registrados.</p>
+            {% endif %}
+            <a class="primary-button day-modal-link" href="{{ day.url_agendar }}">Agendar este dia</a>
+          </section>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    (function () {
+      const layer = document.querySelector("[data-modal-layer]");
+      const openers = document.querySelectorAll("[data-modal-target]");
+      const closers = document.querySelectorAll("[data-modal-close]");
+
+      function closeModal() {
+        if (!layer) return;
+        layer.hidden = true;
+        layer.querySelectorAll(".day-modal").forEach((modal) => {
+          modal.hidden = true;
+        });
+      }
+
+      openers.forEach((button) => {
+        button.addEventListener("click", () => {
+          const modal = document.getElementById(button.dataset.modalTarget);
+          if (!layer || !modal) return;
+          closeModal();
+          layer.hidden = false;
+          modal.hidden = false;
+        });
+      });
+
+      closers.forEach((button) => button.addEventListener("click", closeModal));
+      if (layer) {
+        layer.addEventListener("click", (event) => {
+          if (event.target === layer) closeModal();
+        });
+      }
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeModal();
+      });
+    })();
+  </script>
+{% endblock %}

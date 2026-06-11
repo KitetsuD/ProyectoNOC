@@ -1,0 +1,47 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Dashboard | ProyectoNOC{% endblock %}
+{% block encabezado %}Dashboard NOC{% endblock %}
+{% block menu_dashboard %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="admin-bienvenida">
+    <div>
+      <h2>Panel NOC Cliente</h2>
+      <p>Vista interna para registrar gestiones, revisar pendientes y mantener trazabilidad operacional.</p>
+    </div>
+    <span class="estado-chip">Entorno activo</span>
+  </section>
+
+  <section class="panel-stat-grid" aria-label="Resumen operativo">
+    {% for label, value in summary %}
+      <article class="panel-stat-card">
+        <span>{{ label }}</span>
+        <strong>{{ value }}</strong>
+      </article>
+    {% endfor %}
+  </section>
+
+  <h2 class="section-title">Modulos de trabajo</h2>
+  <section class="module-grid" aria-label="Modulos disponibles">
+    {% for module in modules %}
+      {% if module.url %}
+        <a class="module-card module-card-link" href="{{ module.url }}">
+          <div>
+            <h3>{{ module.title }}</h3>
+            <p>{{ module.description }}</p>
+          </div>
+          <span class="module-state available">{{ module.state }}</span>
+        </a>
+      {% else %}
+        <article class="module-card">
+          <div>
+            <h3>{{ module.title }}</h3>
+            <p>{{ module.description }}</p>
+          </div>
+          <span class="module-state">{{ module.state }}</span>
+        </article>
+      {% endif %}
+    {% endfor %}
+  </section>
+{% endblock %}

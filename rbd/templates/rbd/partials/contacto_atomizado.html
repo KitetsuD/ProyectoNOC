@@ -1,0 +1,10 @@
+<dl class="rbd-contact-list">
+  {% for item in contacto.items %}
+    <div>
+      <dt>{{ item.label }}</dt>
+      <dd>
+        {% include "rbd/partials/copiable_value.html" with value=item.value label=item.label %}
+      </dd>
+    </div>
+  {% endfor %}
+</dl>
