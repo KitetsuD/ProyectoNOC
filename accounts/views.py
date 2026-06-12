@@ -171,16 +171,10 @@ def admin_descargar_plantilla(request):
 def admin_usuarios(request):
     User = get_user_model()
     usuarios = User.objects.order_by("-is_staff", "-is_active", "username")
-    stats = [
-        {"label": "Usuarios", "value": User.objects.count()},
-        {"label": "Activos", "value": User.objects.filter(is_active=True).count()},
-        {"label": "ADMIN", "value": User.objects.filter(is_staff=True).count()},
-        {"label": "Inactivos", "value": User.objects.filter(is_active=False).count()},
-    ]
     return render(
         request,
         "accounts/admin_user_list.html",
-        {"usuarios": usuarios, "stats": stats},
+        {"usuarios": usuarios},
     )
 
 

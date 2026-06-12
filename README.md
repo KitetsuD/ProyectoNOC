@@ -24,6 +24,8 @@ http://localhost:8003
 
 PostgreSQL queda expuesto localmente en el puerto `5433` para evitar conflictos con otros proyectos.
 
+En produccion el contenedor ejecuta migraciones, recolecta archivos estaticos con `collectstatic` y levanta Django con Gunicorn. Esto permite que `/admin/` cargue correctamente sus CSS y JS con `DEBUG=False`.
+
 ## Comandos utiles
 
 ```powershell
