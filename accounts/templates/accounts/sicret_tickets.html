@@ -1,0 +1,129 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Tickets SICRET | ProyectoNOC{% endblock %}
+{% block encabezado %}Tickets SICRET{% endblock %}
+{% block menu_sicret_tickets %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="sicret-page">
+    <section class="sicret-tickets-hero">
+      <div>
+        <span>Seguimiento operativo</span>
+        <h2>Bandeja de tickets SICRET</h2>
+        <p>Gestiona el estado actual de cada solicitud y revisa rapidamente el servicio asociado.</p>
+      </div>
+      <a class="ghost-button" href="{% url 'sicret' %}">Nuevo ticket</a>
+    </section>
+
+    <section class="sicret-status-summary">
+      {% for item in resumen_estados %}
+        <a class="sicret-summary-card sicret-summary-{{ item.valor }}{% if estado_actual == item.valor %} is-active{% endif %}" href="?estado={{ item.valor }}{% if query %}&q={{ query|urlencode }}{% endif %}">
+          <span>{{ item.etiqueta }}</span>
+          <strong>{{ item.total }}</strong>
+        </a>
+      {% endfor %}
+    </section>
+
+    <form class="sicret-ticket-filters" method="get">
+      <label>
+        <span>Buscar</span>
+        <input class="sicret-control" type="search" name="q" value="{{ query }}" placeholder="Ticket, RBD, escuela, IP o instancia">
+      </label>
+      <label>
+        <span>Estado</span>
+        <select class="sicret-control" name="estado">
+          <option value="">Todos</option>
+          {% for value, label in estados_sicret %}
+            <option value="{{ value }}"{% if estado_actual == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="sicret-filter-actions">
+        <button class="primary-button" type="submit">Filtrar</button>
+        <a class="ghost-button" href="{% url 'sicret_tickets' %}">Limpiar</a>
+      </div>
+    </form>
+
+    <section class="sicret-ticket-list">
+      <header>
+        <div>
+          <span>Tickets actuales</span>
+          <h2>{{ total_solicitudes }} resultado{% if total_solicitudes != 1 %}s{% endif %}</h2>
+        </div>
+      </header>
+
+      {% if solicitudes %}
+        <div class="sicret-ticket-table-wrap">
+          <table class="sicret-ticket-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>RBD / escuela</th>
+                <th>Servicio</th>
+                <th>Diagnostico</th>
+                <th>Estado SICRET</th>
+                <th>Actualizar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for solicitud in solicitudes %}
+                <tr>
+                  <td>
+                    <strong>{{ solicitud.ticket_netcracker }}</strong>
+                    <small>{{ solicitud.instancia }}</small>
+                    <small>{{ solicitud.creado_en|date:"d/m/Y H:i" }} - {{ solicitud.creado_por.username }}</small>
+                  </td>
+                  <td>
+                    <strong>RBD {{ solicitud.rbd }}</strong>
+                    <small>{{ solicitud.nombre_escuela }}</small>
+                    <small>{{ solicitud.comuna }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ solicitud.ip_servicio }}</strong>
+                    <small>{{ solicitud.zona }}</small>
+                    <small>{{ solicitud.direccion }}</small>
+                  </td>
+                  <td>
+                    <span class="sicret-status sicret-status-{{ solicitud.estado_enlace }}">
+                      {{ solicitud.get_estado_enlace_display }}
+                    </span>
+                    <small>{{ solicitud.get_descripcion_falla_display }}</small>
+                    {% if solicitud.detalle_adicional %}
+                      <small>{{ solicitud.detalle_adicional|truncatechars:80 }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="sicret-workflow-status sicret-workflow-status-{{ solicitud.estado_sicret }}">
+                      {{ solicitud.get_estado_sicret_display }}
+                    </span>
+                    {% if solicitud.estado_sicret_actualizado_por %}
+                      <small>{{ solicitud.estado_sicret_actualizado_en|date:"d/m/Y H:i" }} - {{ solicitud.estado_sicret_actualizado_por.username }}</small>
+                    {% else %}
+                      <small>Sin cambios de estado</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <form class="sicret-state-form" method="post" action="{% url 'sicret_ticket_estado' solicitud.id %}">
+                      {% csrf_token %}
+                      <select class="sicret-control" name="estado_sicret" aria-label="Estado SICRET de {{ solicitud.ticket_netcracker }}">
+                        {% for value, label in estados_sicret %}
+                          <option value="{{ value }}"{% if solicitud.estado_sicret == value %} selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                      <button class="primary-button" type="submit">Guardar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="sicret-empty-state">
+          <strong>Sin tickets SICRET</strong>
+          <span>No hay solicitudes para los filtros actuales.</span>
+        </div>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

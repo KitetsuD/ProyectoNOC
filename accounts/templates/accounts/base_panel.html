@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}ProyectoNOC{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-38">
+  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-42">
 </head>
 <body>
   <div class="admin-shell" id="adminShell">
@@ -77,6 +77,15 @@
               <path d="M12 13h4"></path>
             </svg>
             <span>SICRET</span>
+          </a>
+          <a href="{% url 'sicret_tickets' %}" class="{% block menu_sicret_tickets %}{% endblock %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 4h14v16H5Z"></path>
+              <path d="M8 8h8"></path>
+              <path d="M8 12h5"></path>
+              <path d="M8 16h8"></path>
+            </svg>
+            <span>Tickets SICRET</span>
           </a>
           {% if request.user.is_staff %}
             <span class="admin-menu-section-label">ADMIN</span>

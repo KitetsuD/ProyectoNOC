@@ -83,19 +83,6 @@
           {% endfor %}
         </div>
 
-        <div class="form-question is-wide weekend-option{% if form.llamada_realizada.errors %} has-error{% endif %}">
-          <label class="weekend-option-label" for="{{ form.llamada_realizada.id_for_label }}">
-            {{ form.llamada_realizada }}
-            <span class="weekend-option-control" aria-hidden="true"></span>
-            <span class="weekend-option-copy">
-              <strong>Llamada realizada</strong>
-              <small>Marca esta opcion si la llamada asociada a la agenda ya fue realizada.</small>
-            </span>
-          </label>
-          {% for error in form.llamada_realizada.errors %}
-            <p class="form-error">{{ error }}</p>
-          {% endfor %}
-        </div>
       </div>
 
       <div class="form-actions">

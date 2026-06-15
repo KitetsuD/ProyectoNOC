@@ -20,7 +20,6 @@ class RegistroBitacoraForm(forms.ModelForm):
             "dia",
             "hora",
             "es_fin_de_semana",
-            "llamada_realizada",
         )
         labels = {
             "ticket": "Ticket",
@@ -29,7 +28,6 @@ class RegistroBitacoraForm(forms.ModelForm):
             "dia": "Dia",
             "hora": "Hora",
             "es_fin_de_semana": "Agenda de fin de semana",
-            "llamada_realizada": "Llamada realizada",
         }
         widgets = {
             "ticket": forms.TextInput(
@@ -67,11 +65,6 @@ class RegistroBitacoraForm(forms.ModelForm):
                 }
             ),
             "es_fin_de_semana": forms.CheckboxInput(
-                attrs={
-                    "class": "weekend-checkbox",
-                }
-            ),
-            "llamada_realizada": forms.CheckboxInput(
                 attrs={
                     "class": "weekend-checkbox",
                 }

@@ -12,7 +12,7 @@
         <h2>Ticket SICRET</h2>
         <p>Formulario operativo para recopilar los datos necesarios antes de ingresar o derivar una solicitud SICRET.</p>
       </div>
-      <strong>{{ solicitudes|length }}</strong>
+      <strong>{{ total_solicitudes }}</strong>
     </section>
 
     <section class="sicret-layout">
@@ -37,6 +37,7 @@
               <label for="{{ form.rbd.id_for_label }}">{{ form.rbd.label }} <span>*</span></label>
               {{ form.rbd }}
               {% for error in form.rbd.errors %}<p>{{ error }}</p>{% endfor %}
+              <small class="sicret-autofill-status" data-rbd-status aria-live="polite"></small>
             </div>
             <div class="sicret-field{% if form.zona.errors %} has-error{% endif %}">
               <label for="{{ form.zona.id_for_label }}">{{ form.zona.label }} <span>*</span></label>
@@ -134,32 +135,94 @@
         </div>
       </form>
 
-      <aside class="sicret-side">
-        <section class="sicret-help">
-          <span>Checklist</span>
-          <h2>Antes de enviar</h2>
-          <ul>
-            <li>Validar ticket Netcracker y RBD.</li>
-            <li>Confirmar contacto, telefono y correo.</li>
-            <li>Registrar el estado actual del enlace.</li>
-            <li>Agregar detalle adicional si la falla no queda clara.</li>
-          </ul>
-        </section>
-
-        <section class="sicret-recent">
-          <span>Ultimas solicitudes</span>
-          <h2>Registro reciente</h2>
-          {% for solicitud in solicitudes %}
-            <article>
-              <strong>{{ solicitud.ticket_netcracker }}</strong>
-              <span>RBD {{ solicitud.rbd }} - {{ solicitud.get_estado_enlace_display }}</span>
-              <small>{{ solicitud.creado_en|date:"d/m/Y H:i" }} / {{ solicitud.creado_por.username }}</small>
-            </article>
-          {% empty %}
-            <p>Sin solicitudes registradas.</p>
-          {% endfor %}
-        </section>
-      </aside>
     </section>
+
   </section>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    (() => {
+      const rbdInput = document.getElementById("id_rbd");
+      const status = document.querySelector("[data-rbd-status]");
+      if (!rbdInput || !status) {
+        return;
+      }
+
+      const fields = {
+        zona: "id_zona",
+        comuna: "id_comuna",
+        nombre_escuela: "id_nombre_escuela",
+        direccion: "id_direccion",
+        ip_servicio: "id_ip_servicio",
+        instancia: "id_instancia",
+      };
+
+      let timeoutId = null;
+
+      const setStatus = (message, state = "") => {
+        status.textContent = message;
+        status.classList.remove("is-success", "is-error", "is-loading");
+        if (state) {
+          status.classList.add(`is-${state}`);
+        }
+      };
+
+      const fillFields = (data) => {
+        Object.entries(fields).forEach(([key, id]) => {
+          const field = document.getElementById(id);
+          if (field) {
+            field.value = data[key] || "";
+          }
+        });
+      };
+
+      const loadRbdInfo = async () => {
+        const value = rbdInput.value.trim();
+        if (!value) {
+          setStatus("");
+          return;
+        }
+        if (!/^\d+$/.test(value)) {
+          setStatus("El RBD debe ser numerico.", "error");
+          return;
+        }
+
+        setStatus("Buscando datos del RBD...", "loading");
+        try {
+          const response = await fetch(`{% url 'sicret_rbd_info' %}?rbd=${encodeURIComponent(value)}`, {
+            headers: {"X-Requested-With": "XMLHttpRequest"},
+          });
+          const data = await response.json();
+          if (!response.ok || !data.encontrado) {
+            setStatus(data.mensaje || "No se encontro informacion para ese RBD.", "error");
+            return;
+          }
+
+          fillFields(data);
+          setStatus("Datos del RBD cargados automaticamente.", "success");
+        } catch (error) {
+          setStatus("No se pudo consultar el RBD.", "error");
+        }
+      };
+
+      const scheduleLoad = () => {
+        window.clearTimeout(timeoutId);
+        timeoutId = window.setTimeout(loadRbdInfo, 450);
+      };
+
+      rbdInput.addEventListener("input", scheduleLoad);
+      rbdInput.addEventListener("blur", () => {
+        window.clearTimeout(timeoutId);
+        loadRbdInfo();
+      });
+
+      const form = rbdInput.closest("form");
+      if (form) {
+        form.addEventListener("reset", () => {
+          window.setTimeout(() => setStatus(""), 0);
+        });
+      }
+    })();
+  </script>
 {% endblock %}

@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -205,14 +205,134 @@ def sicret(request):
     solicitudes = SolicitudSicret.objects.select_related("creado_por")
     if not request.user.is_staff:
         solicitudes = solicitudes.filter(creado_por=request.user)
+    total_solicitudes = solicitudes.count()
 
     return render(
         request,
         "accounts/sicret.html",
         {
             "form": form,
-            "solicitudes": solicitudes[:8],
+            "total_solicitudes": total_solicitudes,
         },
+    )
+
+
+@login_required
+def sicret_tickets(request):
+    solicitudes_base = SolicitudSicret.objects.select_related(
+        "creado_por",
+        "estado_sicret_actualizado_por",
+    )
+    if not request.user.is_staff:
+        solicitudes_base = solicitudes_base.filter(creado_por=request.user)
+
+    query = (request.GET.get("q") or "").strip()
+    estado = (request.GET.get("estado") or "").strip()
+    estados_validos = {valor for valor, _ in SolicitudSicret.ESTADOS_SICRET}
+
+    if query:
+        solicitudes_base = solicitudes_base.filter(
+            Q(ticket_netcracker__icontains=query)
+            | Q(rbd__icontains=query)
+            | Q(nombre_escuela__icontains=query)
+            | Q(ip_servicio__icontains=query)
+            | Q(instancia__icontains=query)
+        )
+
+    resumen_estados = [
+        {
+            "valor": valor,
+            "etiqueta": etiqueta,
+            "total": solicitudes_base.filter(estado_sicret=valor).count(),
+        }
+        for valor, etiqueta in SolicitudSicret.ESTADOS_SICRET
+    ]
+
+    solicitudes = solicitudes_base
+    if estado in estados_validos:
+        solicitudes = solicitudes.filter(estado_sicret=estado)
+
+    total = solicitudes.count()
+
+    return render(
+        request,
+        "accounts/sicret_tickets.html",
+        {
+            "solicitudes": solicitudes[:80],
+            "total_solicitudes": total,
+            "estados_sicret": SolicitudSicret.ESTADOS_SICRET,
+            "resumen_estados": resumen_estados,
+            "query": query,
+            "estado_actual": estado,
+        },
+    )
+
+
+@login_required
+def sicret_ticket_estado(request, solicitud_id):
+    if request.method != "POST":
+        return redirect("sicret_tickets")
+
+    solicitud = get_object_or_404(SolicitudSicret, pk=solicitud_id)
+    if not request.user.is_staff and solicitud.creado_por_id != request.user.id:
+        raise PermissionDenied
+
+    estado = (request.POST.get("estado_sicret") or "").strip()
+    estados_validos = {valor for valor, _ in SolicitudSicret.ESTADOS_SICRET}
+    if estado not in estados_validos:
+        messages.error(request, "Estado SICRET no valido.")
+        return redirect("sicret_tickets")
+
+    solicitud.estado_sicret = estado
+    solicitud.estado_sicret_actualizado_por = request.user
+    solicitud.estado_sicret_actualizado_en = timezone.now()
+    solicitud.save(
+        update_fields=[
+            "estado_sicret",
+            "estado_sicret_actualizado_por",
+            "estado_sicret_actualizado_en",
+        ]
+    )
+    messages.success(request, f"Ticket {solicitud.ticket_netcracker} actualizado.")
+    return redirect("sicret_tickets")
+
+
+@login_required
+def sicret_rbd_info(request):
+    rbd = (request.GET.get("rbd") or "").strip()
+    if not rbd:
+        return JsonResponse(
+            {"encontrado": False, "mensaje": "Ingresa un RBD."},
+            status=400,
+        )
+    if not rbd.isdigit():
+        return JsonResponse(
+            {"encontrado": False, "mensaje": "El RBD debe ser numerico."},
+            status=400,
+        )
+
+    servicio = RbdServicio.objects.filter(rbd=int(rbd)).first()
+    if not servicio:
+        return JsonResponse(
+            {"encontrado": False, "mensaje": "No se encontro informacion para ese RBD."},
+            status=404,
+        )
+
+    return JsonResponse(
+        {
+            "encontrado": True,
+            "rbd": str(servicio.rbd),
+            "zona": servicio.zona or servicio.zonal or "",
+            "comuna": servicio.localidad or "",
+            "nombre_escuela": servicio.nombre_establecimiento or "",
+            "direccion": servicio.direccion or "",
+            "ip_servicio": servicio.ip or "",
+            "instancia": (
+                servicio.codigo_servicio_oss
+                or servicio.codigo_servicio_ncc
+                or servicio.identificador_tecnico
+            ),
+        }
     )
 
 

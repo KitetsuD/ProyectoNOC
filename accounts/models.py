@@ -102,6 +102,17 @@ class Procedimiento(models.Model):
 
 
 class SolicitudSicret(models.Model):
+    ESTADO_SICRET_EN_PROCESO = "en_proceso"
+    ESTADO_SICRET_TERRENO = "enviado_terreno"
+    ESTADO_SICRET_PAUSA = "en_pausa"
+    ESTADO_SICRET_CERRADO = "cerrado"
+    ESTADOS_SICRET = (
+        (ESTADO_SICRET_EN_PROCESO, "En proceso"),
+        (ESTADO_SICRET_TERRENO, "Enviado a terreno"),
+        (ESTADO_SICRET_PAUSA, "En pausa"),
+        (ESTADO_SICRET_CERRADO, "Cerrado"),
+    )
+
     ENLACE_OFFLINE = "offline"
     ENLACE_ONLINE = "online"
     ENLACE_INTERMITENTE = "intermitente"
@@ -144,6 +155,19 @@ class SolicitudSicret(models.Model):
     estado_enlace = models.CharField(max_length=20, choices=ESTADOS_ENLACE)
     descripcion_falla = models.CharField(max_length=40, choices=TIPOS_FALLA)
     detalle_adicional = models.TextField(blank=True)
+    estado_sicret = models.CharField(
+        max_length=24,
+        choices=ESTADOS_SICRET,
+        default=ESTADO_SICRET_EN_PROCESO,
+    )
+    estado_sicret_actualizado_en = models.DateTimeField(null=True, blank=True)
+    estado_sicret_actualizado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="estados_sicret_actualizados",
+        null=True,
+        blank=True,
+    )
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

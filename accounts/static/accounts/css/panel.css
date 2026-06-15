@@ -6458,6 +6458,7 @@ a {
 
 .sicret-hero,
 .sicret-panel,
+.sicret-ticket-list,
 .sicret-help,
 .sicret-recent {
   border: 1px solid #d7e2f1;
@@ -6480,6 +6481,7 @@ a {
 
 .sicret-hero span,
 .sicret-panel header span,
+.sicret-ticket-list header span,
 .sicret-help span,
 .sicret-recent > span {
   display: block;
@@ -6533,7 +6535,7 @@ a {
 
 .sicret-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -6554,6 +6556,7 @@ a {
 }
 
 .sicret-panel header h2,
+.sicret-ticket-list header h2,
 .sicret-help h2,
 .sicret-recent h2 {
   margin: 0;
@@ -6625,6 +6628,29 @@ textarea.sicret-control {
   font-weight: 800;
 }
 
+.sicret-autofill-status {
+  min-height: 16px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sicret-autofill-status:empty {
+  display: none;
+}
+
+.sicret-autofill-status.is-loading {
+  color: #2563eb;
+}
+
+.sicret-autofill-status.is-success {
+  color: #047857;
+}
+
+.sicret-autofill-status.is-error {
+  color: #dc2626;
+}
+
 .sicret-radio-list {
   display: flex;
   flex-wrap: wrap;
@@ -6660,6 +6686,288 @@ textarea.sicret-control {
   border-radius: 8px;
   padding: 14px;
   background: #ffffff;
+}
+
+.sicret-tickets-hero,
+.sicret-ticket-filters {
+  border: 1px solid #d7e2f1;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgb(15 23 42 / 7%);
+}
+
+.sicret-tickets-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+}
+
+.sicret-tickets-hero span {
+  display: block;
+  margin-bottom: 5px;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.sicret-tickets-hero h2,
+.sicret-tickets-hero p {
+  margin: 0;
+}
+
+.sicret-tickets-hero h2 {
+  color: #102a43;
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.sicret-tickets-hero p {
+  margin-top: 5px;
+  color: #52637a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sicret-status-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sicret-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 74px;
+  border: 1px solid #d7e2f1;
+  border-left: 5px solid #0f766e;
+  border-radius: 8px;
+  padding: 14px;
+  background: #ffffff;
+  color: #102a43;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgb(15 23 42 / 6%);
+}
+
+.sicret-summary-card span {
+  color: #52637a;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.sicret-summary-card strong {
+  color: #0f766e;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.sicret-summary-card.is-active {
+  border-color: #0f766e;
+  background: #ecfdf8;
+}
+
+.sicret-summary-enviado_terreno {
+  border-left-color: #2563eb;
+}
+
+.sicret-summary-en_pausa {
+  border-left-color: #d97706;
+}
+
+.sicret-summary-cerrado {
+  border-left-color: #475569;
+}
+
+.sicret-ticket-filters {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 230px auto;
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+}
+
+.sicret-ticket-filters label {
+  display: grid;
+  gap: 7px;
+  color: #102a43;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.sicret-filter-actions,
+.sicret-state-form {
+  display: flex;
+  gap: 8px;
+}
+
+.sicret-filter-actions {
+  justify-content: flex-end;
+}
+
+.sicret-state-form {
+  align-items: center;
+}
+
+.sicret-state-form .sicret-control {
+  min-width: 160px;
+}
+
+.sicret-state-form .primary-button {
+  min-height: 39px;
+  padding: 0 12px;
+}
+
+.sicret-ticket-list {
+  overflow: hidden;
+}
+
+.sicret-ticket-list header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 15px 18px;
+  background: #f8fbff;
+}
+
+.sicret-ticket-list header strong {
+  flex: 0 0 auto;
+  border: 1px solid #bdeee5;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: #ecfdf8;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.sicret-ticket-table-wrap {
+  overflow-x: auto;
+}
+
+.sicret-ticket-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.sicret-ticket-table th {
+  border-bottom: 1px solid #dbe5f1;
+  padding: 11px 14px;
+  background: #ffffff;
+  color: #496080;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.sicret-ticket-table td {
+  border-bottom: 1px solid #e8eef6;
+  padding: 13px 14px;
+  color: #102a43;
+  font-size: 13px;
+  font-weight: 800;
+  vertical-align: top;
+}
+
+.sicret-ticket-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.sicret-ticket-table td strong,
+.sicret-ticket-table td small {
+  display: block;
+}
+
+.sicret-ticket-table td strong {
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.sicret-ticket-table td small {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.sicret-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: #e8f1ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.sicret-status-offline {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.sicret-status-online {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.sicret-status-intermitente {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.sicret-workflow-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 11px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.sicret-workflow-status-enviado_terreno {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.sicret-workflow-status-en_pausa {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.sicret-workflow-status-cerrado {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.sicret-empty-state {
+  display: grid;
+  gap: 5px;
+  padding: 24px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.sicret-empty-state strong {
+  color: #102a43;
+  font-size: 16px;
 }
 
 .sicret-side {
@@ -6715,9 +7023,14 @@ textarea.sicret-control {
   .ops-two-columns,
   .ops-tutorial-shell,
   .sicret-layout,
+  .sicret-status-summary,
   .ops-reminder-grid,
   .ops-procedure-grid,
   .backup-scope {
+    grid-template-columns: 1fr;
+  }
+
+  .sicret-ticket-filters {
     grid-template-columns: 1fr;
   }
 }
@@ -6752,6 +7065,8 @@ textarea.sicret-control {
   }
 
   .sicret-hero,
+  .sicret-tickets-hero,
+  .sicret-ticket-list header,
   .sicret-actions {
     align-items: stretch;
     flex-direction: column;
@@ -6762,7 +7077,15 @@ textarea.sicret-control {
   }
 
   .sicret-actions .primary-button,
-  .sicret-actions .ghost-button {
+  .sicret-actions .ghost-button,
+  .sicret-filter-actions .primary-button,
+  .sicret-filter-actions .ghost-button,
+  .sicret-state-form .primary-button {
     width: 100%;
+  }
+
+  .sicret-filter-actions,
+  .sicret-state-form {
+    flex-direction: column;
   }
 }
