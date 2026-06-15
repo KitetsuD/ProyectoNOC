@@ -5616,44 +5616,6 @@ a {
   }
 }
 
-/* Operational modules */
-.admin-notification-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  border: 1px solid #d7e2f1;
-  border-radius: 8px;
-  padding: 0 11px;
-  background: #ffffff;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 900;
-  text-decoration: none;
-}
-
-.admin-notification-link strong {
-  display: inline-grid;
-  place-items: center;
-  min-width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  color: #334155;
-  font-size: 12px;
-}
-
-.admin-notification-link.has-alerts {
-  border-color: #fed7aa;
-  background: #fff7ed;
-  color: #9a3412;
-}
-
-.admin-notification-link.has-alerts strong {
-  background: #ea580c;
-  color: #ffffff;
-}
-
 .bitacora-cancel-card {
   display: grid;
   gap: 12px;

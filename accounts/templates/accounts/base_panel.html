@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}ProyectoNOC{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-42">
+  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-43">
 </head>
 <body>
   <div class="admin-shell" id="adminShell">
@@ -136,10 +136,6 @@
           <h1>{% block encabezado %}ProyectoNOC{% endblock %}</h1>
         </div>
         <div class="admin-top-actions">
-          <a class="admin-notification-link{% if notificaciones_pendientes %} has-alerts{% endif %}" href="{% url 'procedimientos' %}" aria-label="Ver gestiones internas pendientes">
-            <span>Alertas</span>
-            <strong>{{ notificaciones_pendientes|default:0 }}</strong>
-          </a>
           <div class="admin-usuario">
             <span>{{ request.user.username }}</span>
             <strong>{% if request.user.is_staff %}NOC Admin{% else %}Operador{% endif %}</strong>
