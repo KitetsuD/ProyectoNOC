@@ -1,0 +1,89 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}RBD Admin | ProyectoNOC{% endblock %}
+{% block encabezado %}RBD Admin{% endblock %}
+{% block menu_admin_rbd %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="noc-admin-page">
+    <section class="ops-hero">
+      <div>
+        <span>ADMIN</span>
+        <h2>Administracion RBD</h2>
+        <p>Busca por numero de RBD para modificar la informacion cargada.</p>
+      </div>
+      <strong class="ops-admin-chip">{{ total_rbd }} registros</strong>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>Busqueda</span>
+          <h2>RBD</h2>
+        </div>
+      </div>
+      <form class="noc-admin-upload-form" method="get">
+        <div class="noc-admin-form-grid noc-admin-form-grid-single">
+          <div class="noc-admin-field">
+            <label for="{{ form.q.id_for_label }}">{{ form.q.label }}</label>
+            {{ form.q }}
+          </div>
+        </div>
+        <div class="noc-admin-actions">
+          <button class="primary-button" type="submit">Buscar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="noc-users-panel">
+      <div class="noc-users-panel-head">
+        <div>
+          <span>Resultados</span>
+          <h2>{{ titulo_resultados }}</h2>
+        </div>
+      </div>
+      <div class="noc-users-table-wrap">
+        <table class="noc-users-table admin-rbd-table">
+          <thead>
+            <tr>
+              <th>RBD</th>
+              <th>Establecimiento</th>
+              <th>BPI</th>
+              <th>Servicio</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for servicio in resultados %}
+              <tr>
+                <td><strong>{{ servicio.rbd }}</strong></td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.nombre_establecimiento|default:"Sin nombre" }}</strong>
+                    <small>{{ servicio.localidad|default:"Sin comuna" }}{% if servicio.region %} - {{ servicio.region }}{% endif %}</small>
+                  </div>
+                </td>
+                <td>{{ servicio.bpi|default:"Sin informacion" }}</td>
+                <td>{{ servicio.tecnologia_resumen }}{% if servicio.ip %} / {{ servicio.ip }}{% endif %}</td>
+                <td>
+                  <div class="noc-user-actions">
+                    <a class="noc-user-action" href="{% url 'admin_rbd_editar' servicio.id %}">Editar</a>
+                    <a class="noc-user-action" href="{% url 'rbd:buscar' %}?rbd={{ servicio.rbd }}">Ver ficha</a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5">
+                  <div class="noc-users-empty">
+                    {% if termino %}Sin resultados para la busqueda.{% else %}Ingresa un RBD o BPI para buscar.{% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+{% endblock %}

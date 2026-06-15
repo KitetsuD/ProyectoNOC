@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}ProyectoNOC{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-30">
+  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-38">
 </head>
 <body>
   <div class="admin-shell" id="adminShell">
@@ -60,6 +60,24 @@
             </svg>
             <span>Calendario</span>
           </a>
+          <a href="{% url 'procedimientos' %}" class="{% block menu_procedimientos %}{% endblock %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 4h16v16H4Z"></path>
+              <path d="M8 8h8"></path>
+              <path d="M8 12h8"></path>
+              <path d="M8 16h5"></path>
+            </svg>
+            <span>Tutoriales</span>
+          </a>
+          <a href="{% url 'sicret' %}" class="{% block menu_sicret %}{% endblock %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 5h16v14H4Z"></path>
+              <path d="M8 5v14"></path>
+              <path d="M12 9h5"></path>
+              <path d="M12 13h4"></path>
+            </svg>
+            <span>SICRET</span>
+          </a>
           {% if request.user.is_staff %}
             <span class="admin-menu-section-label">ADMIN</span>
             <a href="{% url 'admin_carga_datos' %}" class="{% block menu_admin_carga %}{% endblock %}">
@@ -70,6 +88,16 @@
                 <path d="M8 20h8"></path>
               </svg>
               <span>Carga de datos</span>
+            </a>
+            <a href="{% url 'admin_rbd' %}" class="{% block menu_admin_rbd %}{% endblock %}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 5h18"></path>
+                <path d="M3 12h18"></path>
+                <path d="M3 19h18"></path>
+                <path d="M8 5v14"></path>
+                <path d="M16 5v14"></path>
+              </svg>
+              <span>RBD Admin</span>
             </a>
             <a href="{% url 'admin_usuarios' %}" class="{% block menu_admin_usuarios %}{% endblock %}">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -99,6 +127,10 @@
           <h1>{% block encabezado %}ProyectoNOC{% endblock %}</h1>
         </div>
         <div class="admin-top-actions">
+          <a class="admin-notification-link{% if notificaciones_pendientes %} has-alerts{% endif %}" href="{% url 'procedimientos' %}" aria-label="Ver gestiones internas pendientes">
+            <span>Alertas</span>
+            <strong>{{ notificaciones_pendientes|default:0 }}</strong>
+          </a>
           <div class="admin-usuario">
             <span>{{ request.user.username }}</span>
             <strong>{% if request.user.is_staff %}NOC Admin{% else %}Operador{% endif %}</strong>

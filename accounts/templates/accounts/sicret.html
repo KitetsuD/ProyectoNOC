@@ -1,0 +1,165 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}SICRET | ProyectoNOC{% endblock %}
+{% block encabezado %}SICRET{% endblock %}
+{% block menu_sicret %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="sicret-page">
+    <section class="sicret-hero">
+      <div>
+        <span>Solicitud interna</span>
+        <h2>Ticket SICRET</h2>
+        <p>Formulario operativo para recopilar los datos necesarios antes de ingresar o derivar una solicitud SICRET.</p>
+      </div>
+      <strong>{{ solicitudes|length }}</strong>
+    </section>
+
+    <section class="sicret-layout">
+      <form class="sicret-form" method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="form-non-field-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <section class="sicret-panel">
+          <header>
+            <span>Identificacion del servicio</span>
+            <h2>Datos del ticket</h2>
+          </header>
+          <div class="sicret-grid">
+            <div class="sicret-field{% if form.ticket_netcracker.errors %} has-error{% endif %}">
+              <label for="{{ form.ticket_netcracker.id_for_label }}">{{ form.ticket_netcracker.label }} <span>*</span></label>
+              {{ form.ticket_netcracker }}
+              {% for error in form.ticket_netcracker.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field{% if form.rbd.errors %} has-error{% endif %}">
+              <label for="{{ form.rbd.id_for_label }}">{{ form.rbd.label }} <span>*</span></label>
+              {{ form.rbd }}
+              {% for error in form.rbd.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field{% if form.zona.errors %} has-error{% endif %}">
+              <label for="{{ form.zona.id_for_label }}">{{ form.zona.label }} <span>*</span></label>
+              {{ form.zona }}
+              {% for error in form.zona.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field{% if form.comuna.errors %} has-error{% endif %}">
+              <label for="{{ form.comuna.id_for_label }}">{{ form.comuna.label }} <span>*</span></label>
+              {{ form.comuna }}
+              {% for error in form.comuna.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="sicret-panel">
+          <header>
+            <span>Establecimiento</span>
+            <h2>Ubicacion y servicio</h2>
+          </header>
+          <div class="sicret-grid">
+            <div class="sicret-field is-wide{% if form.nombre_escuela.errors %} has-error{% endif %}">
+              <label for="{{ form.nombre_escuela.id_for_label }}">{{ form.nombre_escuela.label }} <span>*</span></label>
+              {{ form.nombre_escuela }}
+              {% for error in form.nombre_escuela.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field is-wide{% if form.direccion.errors %} has-error{% endif %}">
+              <label for="{{ form.direccion.id_for_label }}">{{ form.direccion.label }} <span>*</span></label>
+              {{ form.direccion }}
+              {% for error in form.direccion.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field{% if form.ip_servicio.errors %} has-error{% endif %}">
+              <label for="{{ form.ip_servicio.id_for_label }}">{{ form.ip_servicio.label }} <span>*</span></label>
+              {{ form.ip_servicio }}
+              {% for error in form.ip_servicio.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field{% if form.instancia.errors %} has-error{% endif %}">
+              <label for="{{ form.instancia.id_for_label }}">{{ form.instancia.label }} <span>*</span></label>
+              {{ form.instancia }}
+              {% for error in form.instancia.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="sicret-panel">
+          <header>
+            <span>Contacto</span>
+            <h2>Datos de contacto</h2>
+          </header>
+          <div class="sicret-grid">
+            <div class="sicret-field{% if form.nombre_contacto.errors %} has-error{% endif %}">
+              <label for="{{ form.nombre_contacto.id_for_label }}">{{ form.nombre_contacto.label }} <span>*</span></label>
+              {{ form.nombre_contacto }}
+              {% for error in form.nombre_contacto.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field{% if form.telefono.errors %} has-error{% endif %}">
+              <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }} <span>*</span></label>
+              {{ form.telefono }}
+              {% for error in form.telefono.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field is-wide{% if form.correo.errors %} has-error{% endif %}">
+              <label for="{{ form.correo.id_for_label }}">{{ form.correo.label }} <span>*</span></label>
+              {{ form.correo }}
+              {% for error in form.correo.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="sicret-panel">
+          <header>
+            <span>Diagnostico</span>
+            <h2>Estado y falla</h2>
+          </header>
+          <div class="sicret-grid">
+            <div class="sicret-field is-wide{% if form.estado_enlace.errors %} has-error{% endif %}">
+              <label>{{ form.estado_enlace.label }} <span>*</span></label>
+              {{ form.estado_enlace }}
+              {% for error in form.estado_enlace.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field{% if form.descripcion_falla.errors %} has-error{% endif %}">
+              <label for="{{ form.descripcion_falla.id_for_label }}">{{ form.descripcion_falla.label }} <span>*</span></label>
+              {{ form.descripcion_falla }}
+              {% for error in form.descripcion_falla.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field is-wide{% if form.detalle_adicional.errors %} has-error{% endif %}">
+              <label for="{{ form.detalle_adicional.id_for_label }}">{{ form.detalle_adicional.label }}</label>
+              {{ form.detalle_adicional }}
+              {% for error in form.detalle_adicional.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <div class="sicret-actions">
+          <button class="primary-button" type="submit">Registrar solicitud</button>
+          <button class="ghost-button" type="reset">Limpiar</button>
+        </div>
+      </form>
+
+      <aside class="sicret-side">
+        <section class="sicret-help">
+          <span>Checklist</span>
+          <h2>Antes de enviar</h2>
+          <ul>
+            <li>Validar ticket Netcracker y RBD.</li>
+            <li>Confirmar contacto, telefono y correo.</li>
+            <li>Registrar el estado actual del enlace.</li>
+            <li>Agregar detalle adicional si la falla no queda clara.</li>
+          </ul>
+        </section>
+
+        <section class="sicret-recent">
+          <span>Ultimas solicitudes</span>
+          <h2>Registro reciente</h2>
+          {% for solicitud in solicitudes %}
+            <article>
+              <strong>{{ solicitud.ticket_netcracker }}</strong>
+              <span>RBD {{ solicitud.rbd }} - {{ solicitud.get_estado_enlace_display }}</span>
+              <small>{{ solicitud.creado_en|date:"d/m/Y H:i" }} / {{ solicitud.creado_por.username }}</small>
+            </article>
+          {% empty %}
+            <p>Sin solicitudes registradas.</p>
+          {% endfor %}
+        </section>
+      </aside>
+    </section>
+  </section>
+{% endblock %}

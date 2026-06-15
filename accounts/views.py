@@ -4,21 +4,25 @@ from io import StringIO
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
+from rbd.forms import AdminRbdSearchForm, AdminRbdServicioForm
+from rbd.models import RbdServicio
 from rbd.services.carga_completa import export_carga_completa
 
-from .forms import AdminCargaDatosForm, AdminUserForm
+from .forms import AdminCargaDatosForm, AdminUserForm, ProcedimientoForm, SicretSolicitudForm
+from .models import Procedimiento, SolicitudSicret
+from .permissions import admin_required
 
 
-def _admin_required(view_func):
-    return login_required(
-        user_passes_test(lambda user: user.is_staff, login_url="login")(view_func)
-    )
+_admin_required = admin_required
 
 
 def _active_admins_queryset():
@@ -48,7 +52,7 @@ def _run_import(path):
     return output.getvalue().strip()
 
 
-def _build_master_excel_response():
+def _build_master_excel_response(filename="ProyectoNOC_Carga_Completa.xlsx"):
     temp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
     temp_path = temp.name
     temp.close()
@@ -67,7 +71,7 @@ def _build_master_excel_response():
         content,
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response["Content-Disposition"] = 'attachment; filename="ProyectoNOC_Carga_Completa.xlsx"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
 
@@ -93,12 +97,6 @@ def dashboard(request):
             "url": reverse("bitacora:crear"),
         },
         {
-            "title": "Recordatorios",
-            "description": "Seguimiento de llamados pendientes y contactos futuros.",
-            "state": "Pendiente",
-            "url": "",
-        },
-        {
             "title": "Tickets",
             "description": "Control complementario de casos vinculados a plataformas externas.",
             "state": "Pendiente",
@@ -112,9 +110,9 @@ def dashboard(request):
         },
         {
             "title": "Procedimientos",
-            "description": "Repositorio operativo de manuales e instructivos.",
-            "state": "Pendiente",
-            "url": "",
+            "description": "Procesos y gestiones internas que deben ejecutarse y cerrarse.",
+            "state": "Disponible",
+            "url": reverse("procedimientos"),
         },
     ]
     summary = [
@@ -131,6 +129,126 @@ def dashboard(request):
             "summary": summary,
         },
     )
+
+
+@login_required
+def procedimientos(request):
+    if request.method == "POST":
+        form = ProcedimientoForm(request.POST, user=request.user)
+        if form.is_valid():
+            procedimiento = form.save(commit=False)
+            procedimiento.creado_por = request.user
+            procedimiento.actualizado_por = request.user
+            if not request.user.is_staff:
+                procedimiento.responsable = request.user
+                procedimiento.activo = True
+            if not procedimiento.responsable:
+                procedimiento.responsable = request.user
+            procedimiento.save()
+            messages.success(request, "Tutorial operativo creado correctamente.")
+            return redirect("procedimientos")
+    else:
+        form = ProcedimientoForm(
+            initial={"activo": True, "tipo": Procedimiento.TIPO_PROCEDIMIENTO},
+            user=request.user,
+        )
+
+    listado = Procedimiento.objects.select_related("creado_por", "actualizado_por", "responsable")
+    documentos = listado.filter(tipo=Procedimiento.TIPO_PROCEDIMIENTO)
+    gestiones = listado.filter(tipo=Procedimiento.TIPO_GESTION)
+    if not request.user.is_staff:
+        documentos = documentos.filter(activo=True)
+        gestiones = gestiones.filter(Q(activo=True), Q(creado_por=request.user) | Q(responsable=request.user))
+
+    documentos = documentos.order_by("orden", "categoria", "titulo")
+    gestiones = gestiones.order_by("estado", "fecha_compromiso", "-prioridad", "orden", "titulo")
+    pendientes = gestiones.exclude(estado=Procedimiento.ESTADO_COMPLETADO)
+    completados = gestiones.filter(estado=Procedimiento.ESTADO_COMPLETADO)
+
+    return render(
+        request,
+        "accounts/procedimientos.html",
+        {
+            "form": form,
+            "documentos": documentos,
+            "procedimientos": pendientes,
+            "completados": completados[:10],
+        },
+    )
+
+
+@_admin_required
+def procedimiento_toggle(request, procedimiento_id):
+    procedimiento = get_object_or_404(Procedimiento, pk=procedimiento_id)
+    if request.method == "POST":
+        procedimiento.activo = not procedimiento.activo
+        procedimiento.actualizado_por = request.user
+        procedimiento.save(update_fields=["activo", "actualizado_por", "actualizado_en"])
+        estado = "publicado" if procedimiento.activo else "ocultado"
+        messages.success(request, f"Procedimiento {estado}.")
+    return redirect("procedimientos")
+
+
+@login_required
+def sicret(request):
+    if request.method == "POST":
+        form = SicretSolicitudForm(request.POST)
+        if form.is_valid():
+            solicitud = form.save(commit=False)
+            solicitud.creado_por = request.user
+            solicitud.save()
+            messages.success(request, "Solicitud SICRET registrada correctamente.")
+            return redirect("sicret")
+    else:
+        form = SicretSolicitudForm()
+
+    solicitudes = SolicitudSicret.objects.select_related("creado_por")
+    if not request.user.is_staff:
+        solicitudes = solicitudes.filter(creado_por=request.user)
+
+    return render(
+        request,
+        "accounts/sicret.html",
+        {
+            "form": form,
+            "solicitudes": solicitudes[:8],
+        },
+    )
+
+
+@login_required
+def procedimiento_accion(request, procedimiento_id):
+    procedimiento = get_object_or_404(Procedimiento, pk=procedimiento_id)
+    if not request.user.is_staff and procedimiento.responsable_id != request.user.id and procedimiento.creado_por_id != request.user.id:
+        raise PermissionDenied
+    if request.method != "POST":
+        return redirect("procedimientos")
+
+    accion = request.POST.get("accion")
+    update_fields = ["estado", "actualizado_por", "actualizado_en"]
+    procedimiento.actualizado_por = request.user
+    if accion == "iniciar":
+        procedimiento.estado = Procedimiento.ESTADO_EN_PROCESO
+        procedimiento.completado_en = None
+        update_fields.append("completado_en")
+        messages.success(request, "Gestion marcada en proceso.")
+    elif accion == "completar":
+        procedimiento.estado = Procedimiento.ESTADO_COMPLETADO
+        procedimiento.resultado = (request.POST.get("resultado") or procedimiento.resultado or "Completado").strip()
+        procedimiento.completado_en = timezone.now()
+        update_fields.extend(["resultado", "completado_en"])
+        messages.success(request, "Gestion completada.")
+    elif accion == "reabrir":
+        procedimiento.estado = Procedimiento.ESTADO_PENDIENTE
+        procedimiento.completado_en = None
+        update_fields.append("completado_en")
+        messages.success(request, "Gestion reabierta.")
+    else:
+        messages.error(request, "Accion no reconocida.")
+        return redirect("procedimientos")
+
+    procedimiento.save(update_fields=update_fields)
+    return redirect("procedimientos")
 
 
 @_admin_required
@@ -165,6 +283,53 @@ def admin_carga_datos(request):
 @_admin_required
 def admin_descargar_plantilla(request):
     return _build_master_excel_response()
+
+
+@_admin_required
+def admin_rbd(request):
+    form = AdminRbdSearchForm(request.GET or None)
+    resultados = RbdServicio.objects.none()
+    termino = ""
+    titulo_resultados = "Sin busqueda activa"
+    if form.is_valid():
+        termino = form.cleaned_data["q"].strip()
+        if termino:
+            resultados = RbdServicio.objects.filter(rbd=int(termino)).order_by("rbd")
+            titulo_resultados = f"Resultado para RBD {termino}"
+
+    return render(
+        request,
+        "accounts/admin_rbd.html",
+        {
+            "form": form,
+            "resultados": resultados,
+            "termino": termino,
+            "titulo_resultados": titulo_resultados,
+            "total_rbd": RbdServicio.objects.count(),
+        },
+    )
+
+
+@_admin_required
+def admin_rbd_editar(request, servicio_id):
+    servicio = get_object_or_404(RbdServicio, pk=servicio_id)
+    if request.method == "POST":
+        form = AdminRbdServicioForm(request.POST, instance=servicio)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"RBD {servicio.rbd} actualizado correctamente.")
+            return redirect(f"{reverse('admin_rbd')}?q={servicio.rbd}")
+    else:
+        form = AdminRbdServicioForm(instance=servicio)
+
+    return render(
+        request,
+        "accounts/admin_rbd_form.html",
+        {
+            "form": form,
+            "servicio": servicio,
+        },
+    )
 
 
 @_admin_required
@@ -203,7 +368,9 @@ def admin_usuario_editar(request, user_id):
         if form.is_valid():
             nuevo_staff = form.cleaned_data["is_staff"]
             nuevo_activo = form.cleaned_data["is_active"]
-            if _is_last_active_admin(user) and (not nuevo_staff or not nuevo_activo):
+            if user == request.user and (not nuevo_staff or not nuevo_activo):
+                form.add_error(None, "No puedes quitar tu propio acceso ADMIN.")
+            elif _is_last_active_admin(user) and (not nuevo_staff or not nuevo_activo):
                 form.add_error(None, "No puedes dejar el sistema sin un ADMIN activo.")
             else:
                 form.save()

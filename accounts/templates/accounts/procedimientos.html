@@ -1,0 +1,192 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Tutoriales operativos | ProyectoNOC{% endblock %}
+{% block encabezado %}Tutoriales operativos{% endblock %}
+{% block menu_procedimientos %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="ops-page">
+    <section class="ops-hero ops-hero-tutorial">
+      <div>
+        <span>Guias de accion</span>
+        <h2>Tutoriales operativos</h2>
+        <p>Guia paso a paso para saber que hacer cuando aparece un caso de proveedor, monitoreo, contingencia o escalamiento.</p>
+      </div>
+      <div class="ops-hero-metrics">
+        <article>
+          <span>Tutoriales</span>
+          <strong>{{ documentos|length }}</strong>
+        </article>
+        <article>
+          <span>Gestiones</span>
+          <strong>{{ procedimientos|length }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="ops-tutorial-shell">
+      <aside class="ops-tutorial-index">
+        <span>Indice rapido</span>
+        <h2>Casos disponibles</h2>
+        <nav aria-label="Indice de tutoriales">
+          {% for documento in documentos %}
+            <a href="#tutorial-{{ documento.id }}">
+              <small>{{ documento.categoria|default:"Tutorial" }}</small>
+              <strong>{{ documento.titulo }}</strong>
+            </a>
+          {% empty %}
+            <p>Sin tutoriales publicados.</p>
+          {% endfor %}
+        </nav>
+      </aside>
+
+      <div class="ops-tutorial-list">
+        {% for documento in documentos %}
+          <article id="tutorial-{{ documento.id }}" class="ops-tutorial-card{% if not documento.activo %} is-hidden-procedure{% endif %}">
+            <header class="ops-tutorial-card-head">
+              <div>
+                <span>{{ documento.categoria|default:"Tutorial" }}</span>
+                <h2>{{ documento.titulo }}</h2>
+              </div>
+              <strong>0{{ forloop.counter }}</strong>
+            </header>
+
+            {% if documento.descripcion %}
+              <section class="ops-tutorial-case">
+                <span>Cuando usarlo</span>
+                <p>{{ documento.descripcion }}</p>
+              </section>
+            {% endif %}
+
+            {% if documento.pasos_tutorial %}
+              <section class="ops-tutorial-steps-block">
+                <span>Pasos a seguir</span>
+                <ol class="ops-tutorial-steps">
+                  {% for paso in documento.pasos_tutorial %}
+                    <li>
+                      <strong>{{ forloop.counter }}</strong>
+                      <p>{{ paso }}</p>
+                    </li>
+                  {% endfor %}
+                </ol>
+              </section>
+            {% endif %}
+
+            <footer class="ops-tutorial-footer">
+              {% if documento.enlace %}
+                <a class="ops-document-link" href="{{ documento.enlace }}" target="_blank" rel="noreferrer">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path>
+                    <path d="M14 2v6h6"></path>
+                    <path d="M8 13h8"></path>
+                    <path d="M8 17h5"></path>
+                  </svg>
+                  Abrir documento completo
+                </a>
+              {% endif %}
+              {% if request.user.is_staff %}
+                <form method="post" action="{% url 'procedimiento_toggle' documento.id %}">
+                  {% csrf_token %}
+                  <button class="ghost-button" type="submit">
+                    {% if documento.activo %}Ocultar{% else %}Publicar{% endif %}
+                  </button>
+                </form>
+              {% endif %}
+            </footer>
+          </article>
+        {% empty %}
+          <article class="ops-card">
+            <p class="ops-empty">Sin tutoriales publicados.</p>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if procedimientos %}
+      <section class="ops-card">
+        <header class="ops-card-head">
+          <div>
+            <span>Seguimiento</span>
+            <h2>Gestiones internas activas</h2>
+          </div>
+        </header>
+        <div class="ops-procedure-grid">
+          {% for procedimiento in procedimientos %}
+            <article class="ops-procedure-card{% if procedimiento.esta_vencido %} is-overdue{% elif procedimiento.es_hoy %} is-today{% endif %}">
+              <header>
+                <span>{{ procedimiento.categoria|default:"Proceso interno" }}</span>
+                <h2>{{ procedimiento.titulo }}</h2>
+              </header>
+              <div class="ops-procedure-meta">
+                <span>{{ procedimiento.get_estado_display }}</span>
+                <span>{{ procedimiento.get_prioridad_display }}</span>
+                {% if procedimiento.fecha_compromiso %}
+                  <span>{{ procedimiento.fecha_compromiso|date:"d/m/Y" }}</span>
+                {% endif %}
+              </div>
+              {% if procedimiento.descripcion %}
+                <p>{{ procedimiento.descripcion }}</p>
+              {% endif %}
+              {% if procedimiento.contenido %}
+                <div class="ops-procedure-content">{{ procedimiento.contenido|linebreaksbr }}</div>
+              {% endif %}
+              <small>
+                Responsable: {{ procedimiento.responsable.username|default:"Sin asignar" }}
+              </small>
+              <footer>
+                {% if procedimiento.enlace %}
+                  <a href="{{ procedimiento.enlace }}" target="_blank" rel="noreferrer">Abrir apoyo</a>
+                {% endif %}
+                <div class="ops-inline-actions">
+                  {% if procedimiento.estado == procedimiento.ESTADO_PENDIENTE %}
+                    <form method="post" action="{% url 'procedimiento_accion' procedimiento.id %}">
+                      {% csrf_token %}
+                      <button class="ghost-button" type="submit" name="accion" value="iniciar">Iniciar</button>
+                    </form>
+                  {% endif %}
+                  <form method="post" action="{% url 'procedimiento_accion' procedimiento.id %}">
+                    {% csrf_token %}
+                    <button class="primary-button" type="submit" name="accion" value="completar">Completar</button>
+                  </form>
+                  {% if request.user.is_staff %}
+                    <form method="post" action="{% url 'procedimiento_toggle' procedimiento.id %}">
+                      {% csrf_token %}
+                      <button class="ghost-button" type="submit">
+                        {% if procedimiento.activo %}Ocultar{% else %}Publicar{% endif %}
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </footer>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if completados %}
+      <section class="ops-card">
+        <header class="ops-card-head">
+          <div>
+            <span>Historial</span>
+            <h2>Gestiones completadas</h2>
+          </div>
+        </header>
+        <div class="ops-list">
+          {% for procedimiento in completados %}
+            <div class="ops-list-item is-muted">
+              <div>
+                <strong>{{ procedimiento.titulo }}</strong>
+                <span>{{ procedimiento.completado_en|date:"d/m/Y H:i" }} - {{ procedimiento.resultado|default:"Completado" }}</span>
+              </div>
+              <form method="post" action="{% url 'procedimiento_accion' procedimiento.id %}">
+                {% csrf_token %}
+                <button class="ghost-button" type="submit" name="accion" value="reabrir">Reabrir</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

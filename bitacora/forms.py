@@ -6,12 +6,22 @@ from .models import RegistroBitacora
 
 
 SLOT_MINUTES = 15
+CALENDAR_START = time(8, 0)
+CALENDAR_END = time(18, 45)
 
 
 class RegistroBitacoraForm(forms.ModelForm):
     class Meta:
         model = RegistroBitacora
-        fields = ("ticket", "rbd", "vinculo_ticket", "dia", "hora", "es_fin_de_semana")
+        fields = (
+            "ticket",
+            "rbd",
+            "vinculo_ticket",
+            "dia",
+            "hora",
+            "es_fin_de_semana",
+            "llamada_realizada",
+        )
         labels = {
             "ticket": "Ticket",
             "rbd": "RBD",
@@ -19,6 +29,7 @@ class RegistroBitacoraForm(forms.ModelForm):
             "dia": "Dia",
             "hora": "Hora",
             "es_fin_de_semana": "Agenda de fin de semana",
+            "llamada_realizada": "Llamada realizada",
         }
         widgets = {
             "ticket": forms.TextInput(
@@ -60,12 +71,19 @@ class RegistroBitacoraForm(forms.ModelForm):
                     "class": "weekend-checkbox",
                 }
             ),
+            "llamada_realizada": forms.CheckboxInput(
+                attrs={
+                    "class": "weekend-checkbox",
+                }
+            ),
         }
 
     def clean_hora(self):
         hora = self.cleaned_data.get("hora")
         if hora and (hora.second or hora.microsecond or hora.minute % SLOT_MINUTES):
             raise forms.ValidationError("La hora debe estar en bloques de 15 minutos.")
+        if hora and (hora < CALENDAR_START or hora >= CALENDAR_END):
+            raise forms.ValidationError("La hora debe estar entre 08:00 y 18:30.")
         return hora
 
     def clean(self):
@@ -73,7 +91,14 @@ class RegistroBitacoraForm(forms.ModelForm):
         dia = cleaned.get("dia")
         hora = cleaned.get("hora")
         if dia and hora:
-            existe = RegistroBitacora.objects.filter(dia=dia, hora=hora).exists()
+            registros = RegistroBitacora.objects.filter(
+                dia=dia,
+                hora=hora,
+                estado=RegistroBitacora.ESTADO_AGENDADA,
+            )
+            if self.instance and self.instance.pk:
+                registros = registros.exclude(pk=self.instance.pk)
+            existe = registros.exists()
             if existe:
                 self.add_error(
                     "hora",

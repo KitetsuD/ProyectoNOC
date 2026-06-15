@@ -4,18 +4,21 @@ from datetime import date, datetime, time, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+
+from accounts.permissions import puede_gestionar_bitacora
 
 from .forms import RegistroBitacoraForm
 from .models import RegistroBitacora
 
 
 CALENDAR_START = time(8, 0)
-CALENDAR_END = time(18, 0)
+CALENDAR_END = time(18, 45)
 SLOT_MINUTES = 15
 
 
@@ -37,10 +40,16 @@ def _parse_time(value):
         return None
 
 
-def _slots_for_day(day):
+def _slots_for_day(day, exclude_id=None):
+    queryset = RegistroBitacora.objects.select_related("usuario").filter(
+        dia=day,
+        estado=RegistroBitacora.ESTADO_AGENDADA,
+    )
+    if exclude_id:
+        queryset = queryset.exclude(pk=exclude_id)
     registros = {
         registro.hora.strftime("%H:%M"): registro
-        for registro in RegistroBitacora.objects.select_related("usuario").filter(dia=day)
+        for registro in queryset
     }
     slots = []
     current = datetime.combine(day, CALENDAR_START)
@@ -82,12 +91,14 @@ def _agenda_context(day):
     }
 
 
-def _occupied_hours(day):
-    return list(
-        RegistroBitacora.objects.filter(dia=day)
-        .order_by("hora")
-        .values_list("hora", flat=True)
+def _occupied_hours(day, exclude_id=None):
+    queryset = RegistroBitacora.objects.filter(
+        dia=day,
+        estado=RegistroBitacora.ESTADO_AGENDADA,
     )
+    if exclude_id:
+        queryset = queryset.exclude(pk=exclude_id)
+    return list(queryset.order_by("hora").values_list("hora", flat=True))
 
 
 def _month_context(selected_day):
@@ -99,6 +110,7 @@ def _month_context(selected_day):
     registros = RegistroBitacora.objects.select_related("usuario").filter(
         dia__gte=grid_start,
         dia__lte=grid_end,
+        estado=RegistroBitacora.ESTADO_AGENDADA,
     ).order_by("dia", "hora")
     registros_por_dia = {}
     for registro in registros:
@@ -167,7 +179,9 @@ def crear_bitacora(request):
             initial["hora"] = hora_inicial
         form = RegistroBitacoraForm(initial=initial)
 
-    registros = RegistroBitacora.objects.select_related("usuario").order_by("-dia", "-hora")[:8]
+    registros = RegistroBitacora.objects.select_related("usuario").filter(
+        estado=RegistroBitacora.ESTADO_AGENDADA,
+    ).order_by("-dia", "-hora")[:8]
     usuario_contacto = request.user.email or request.user.username
     agenda = _agenda_context(dia_calendario)
 
@@ -177,6 +191,9 @@ def crear_bitacora(request):
         {
             "form": form,
             "registros": registros,
+            "modo_formulario": "Nueva agenda",
+            "submit_label": "Agendar",
+            "registro_editado": None,
             "usuario_contacto": usuario_contacto,
             **agenda,
             "horas_ocupadas_json": json.dumps([value.strftime("%H:%M") for value in _occupied_hours(dia_calendario)]),
@@ -185,10 +202,94 @@ def crear_bitacora(request):
 
 
 @login_required
+def editar_bitacora(request, registro_id):
+    registro = get_object_or_404(RegistroBitacora, pk=registro_id)
+    if not puede_gestionar_bitacora(request.user, registro):
+        raise PermissionDenied
+    if registro.estado != RegistroBitacora.ESTADO_AGENDADA:
+        messages.error(request, "No se puede editar una agenda cancelada.")
+        return redirect("bitacora:calendario")
+
+    if request.method == "POST":
+        form = RegistroBitacoraForm(request.POST, instance=registro)
+        dia_calendario = _parse_date(request.POST.get("dia"))
+        if form.is_valid():
+            try:
+                form.save()
+            except IntegrityError:
+                form.add_error("hora", "Ya esta agendada para esta hora.")
+            else:
+                messages.success(request, "Agendamiento actualizado correctamente.")
+                return redirect(f"{reverse('bitacora:calendario')}?dia={registro.dia:%Y-%m-%d}")
+    else:
+        dia_calendario = registro.dia
+        form = RegistroBitacoraForm(instance=registro)
+
+    agenda = _agenda_context(dia_calendario)
+    registros = RegistroBitacora.objects.select_related("usuario").filter(
+        estado=RegistroBitacora.ESTADO_AGENDADA,
+    ).order_by("-dia", "-hora")[:8]
+    return render(
+        request,
+        "bitacora/formulario.html",
+        {
+            "form": form,
+            "registros": registros,
+            "modo_formulario": "Editar agenda",
+            "submit_label": "Guardar cambios",
+            "registro_editado": registro,
+            "usuario_contacto": request.user.email or request.user.username,
+            **agenda,
+            "horas_ocupadas_json": json.dumps(
+                [value.strftime("%H:%M") for value in _occupied_hours(dia_calendario, exclude_id=registro.pk)]
+            ),
+        },
+    )
+
+
+@login_required
+def cancelar_bitacora(request, registro_id):
+    registro = get_object_or_404(RegistroBitacora, pk=registro_id)
+    if not puede_gestionar_bitacora(request.user, registro):
+        raise PermissionDenied
+    if request.method != "POST":
+        return redirect(f"{reverse('bitacora:calendario')}?dia={registro.dia:%Y-%m-%d}")
+
+    if registro.estado == RegistroBitacora.ESTADO_CANCELADA:
+        messages.info(request, "La agenda ya estaba cancelada.")
+    else:
+        registro.estado = RegistroBitacora.ESTADO_CANCELADA
+        registro.cancelado_por = request.user
+        registro.cancelado_en = timezone.now()
+        registro.motivo_cancelacion = (request.POST.get("motivo_cancelacion") or "").strip()
+        registro.save(update_fields=["estado", "cancelado_por", "cancelado_en", "motivo_cancelacion", "actualizado_en"])
+        messages.success(request, "Agendamiento cancelado correctamente.")
+
+    return redirect(f"{reverse('bitacora:calendario')}?dia={registro.dia:%Y-%m-%d}")
+
+
+@login_required
+def cambiar_estado_llamada(request, registro_id):
+    registro = get_object_or_404(RegistroBitacora, pk=registro_id)
+    if not puede_gestionar_bitacora(request.user, registro):
+        raise PermissionDenied
+    if request.method != "POST":
+        return redirect(f"{reverse('bitacora:calendario')}?dia={registro.dia:%Y-%m-%d}")
+
+    registro.llamada_realizada = not registro.llamada_realizada
+    registro.llamada_actualizada_en = timezone.now()
+    registro.save(update_fields=["llamada_realizada", "llamada_actualizada_en", "actualizado_en"])
+    estado = "realizada" if registro.llamada_realizada else "pendiente"
+    messages.success(request, f"Llamada marcada como {estado}.")
+    return redirect(f"{reverse('bitacora:calendario')}?dia={registro.dia:%Y-%m-%d}")
+
+
+@login_required
 def calendario_bitacora(request):
     dia_calendario = _parse_date(request.GET.get("dia"))
     proximos = RegistroBitacora.objects.select_related("usuario").filter(
-        dia__gte=timezone.localdate()
+        dia__gte=timezone.localdate(),
+        estado=RegistroBitacora.ESTADO_AGENDADA,
     ).order_by("dia", "hora")[:12]
     agenda = _agenda_context(dia_calendario)
     month = _month_context(dia_calendario)
@@ -202,5 +303,10 @@ def calendario_bitacora(request):
 @login_required
 def disponibilidad_bitacora(request):
     dia = _parse_date(request.GET.get("dia"))
-    ocupadas = [value.strftime("%H:%M") for value in _occupied_hours(dia)]
+    excluir = request.GET.get("excluir")
+    try:
+        exclude_id = int(excluir) if excluir else None
+    except (TypeError, ValueError):
+        exclude_id = None
+    ocupadas = [value.strftime("%H:%M") for value in _occupied_hours(dia, exclude_id=exclude_id)]
     return JsonResponse({"dia": dia.strftime("%Y-%m-%d"), "ocupadas": ocupadas})

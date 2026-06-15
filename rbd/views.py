@@ -1,7 +1,13 @@
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db import transaction
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+
+from accounts.permissions import puede_gestionar_contactos
 
 from .forms import RbdSearchForm
 from .models import RbdContacto, RbdServicio
@@ -47,8 +53,6 @@ def _item(label, value):
 
 def _metric(label, value):
     return {"label": label, "value": value}
-
-
 
 
 def _colegio_especial(servicio):
@@ -187,25 +191,54 @@ def _build_detail(servicio):
 
 def _guardar_contactos(request, servicio):
     campos = ("nombre", "telefono", "celular", "email", "cargo")
+    contactos = []
+    errores = []
+
     for orden in range(1, 4):
         defaults = {
             campo: (request.POST.get(f"contacto_{orden}_{campo}") or "").strip()
             for campo in campos
         }
-        defaults["fuente"] = "Edicion manual"
-        RbdContacto.objects.update_or_create(
-            servicio=servicio,
-            orden=orden,
-            defaults=defaults,
-        )
+        email = defaults["email"]
+        if email:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errores.append(f"Contacto {orden}: ingresa un email valido.")
+        contactos.append((orden, defaults))
+
+    if errores:
+        return errores
+
+    with transaction.atomic():
+        for orden, defaults in contactos:
+            tiene_datos = any(defaults[campo] for campo in campos)
+            if not tiene_datos:
+                RbdContacto.objects.filter(servicio=servicio, orden=orden).delete()
+                continue
+
+            defaults["fuente"] = "Edicion manual"
+            RbdContacto.objects.update_or_create(
+                servicio=servicio,
+                orden=orden,
+                defaults=defaults,
+            )
+
+    return []
 
 
 @login_required
 def buscar_rbd(request):
     if request.method == "POST" and request.POST.get("accion") == "guardar_contactos":
+        if not puede_gestionar_contactos(request.user):
+            raise PermissionDenied
         servicio = get_object_or_404(RbdServicio, rbd=request.POST.get("rbd"))
-        _guardar_contactos(request, servicio)
-        messages.success(request, "Contactos actualizados correctamente.")
+        errores = _guardar_contactos(request, servicio)
+        if errores:
+            for error in errores:
+                messages.error(request, error)
+        else:
+            messages.success(request, "Contactos actualizados correctamente.")
         return redirect(f"{reverse('rbd:buscar')}?rbd={servicio.rbd}#contactos")
 
     raw_rbd = request.GET.get("rbd") or request.GET.get("q") or ""
@@ -230,6 +263,7 @@ def buscar_rbd(request):
         "busqueda_realizada": bool(raw_rbd),
         "rbd_consultado": raw_rbd,
         "total_rbd": RbdServicio.objects.count(),
+        "puede_editar_contactos": puede_gestionar_contactos(request.user),
         **detail,
     }
     return render(request, "rbd/buscar.html", context)

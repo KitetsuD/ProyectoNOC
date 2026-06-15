@@ -128,7 +128,9 @@
                     <h2>Contactos</h2>
                     <span class="rbd-contact-state" data-contact-state>Solo lectura</span>
                   </div>
-                  <button class="rbd-contact-edit-toggle" type="button" data-contact-edit-toggle>Editar</button>
+                  {% if puede_editar_contactos %}
+                    <button class="rbd-contact-edit-toggle" type="button" data-contact-edit-toggle>Editar</button>
+                  {% endif %}
                 </header>
                 <form class="rbd-contact-editor is-readonly" method="post" data-contact-editor>
                   {% csrf_token %}
@@ -147,15 +149,15 @@
                         </div>
                         <div class="rbd-contact-field">
                           <label for="contacto_{{ contacto.orden }}_telefono">Telefono</label>
-                          <input id="contacto_{{ contacto.orden }}_telefono" name="contacto_{{ contacto.orden }}_telefono" value="{{ contacto.telefono }}" autocomplete="off" disabled data-contact-input>
+                          <input id="contacto_{{ contacto.orden }}_telefono" name="contacto_{{ contacto.orden }}_telefono" type="tel" value="{{ contacto.telefono }}" autocomplete="off" disabled data-contact-input>
                         </div>
                         <div class="rbd-contact-field">
                           <label for="contacto_{{ contacto.orden }}_celular">Celular</label>
-                          <input id="contacto_{{ contacto.orden }}_celular" name="contacto_{{ contacto.orden }}_celular" value="{{ contacto.celular }}" autocomplete="off" disabled data-contact-input>
+                          <input id="contacto_{{ contacto.orden }}_celular" name="contacto_{{ contacto.orden }}_celular" type="tel" value="{{ contacto.celular }}" autocomplete="off" disabled data-contact-input>
                         </div>
                         <div class="rbd-contact-field">
                           <label for="contacto_{{ contacto.orden }}_email">Email</label>
-                          <input id="contacto_{{ contacto.orden }}_email" name="contacto_{{ contacto.orden }}_email" value="{{ contacto.email }}" autocomplete="off" disabled data-contact-input>
+                          <input id="contacto_{{ contacto.orden }}_email" name="contacto_{{ contacto.orden }}_email" type="email" value="{{ contacto.email }}" autocomplete="off" disabled data-contact-input>
                         </div>
                         <div class="rbd-contact-field">
                           <label for="contacto_{{ contacto.orden }}_cargo">Cargo</label>

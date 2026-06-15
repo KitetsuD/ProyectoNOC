@@ -12,7 +12,10 @@
       <div class="bitacora-card-header">
         <div>
           <span class="bitacora-kicker">Bitacora</span>
-          <h2>Nueva agenda</h2>
+          <h2>{{ modo_formulario|default:"Nueva agenda" }}</h2>
+          {% if registro_editado %}
+            <p>Reprograma dia u hora, o actualiza los datos del ticket.</p>
+          {% endif %}
         </div>
       </div>
 
@@ -79,13 +82,45 @@
             <p class="form-error">{{ error }}</p>
           {% endfor %}
         </div>
+
+        <div class="form-question is-wide weekend-option{% if form.llamada_realizada.errors %} has-error{% endif %}">
+          <label class="weekend-option-label" for="{{ form.llamada_realizada.id_for_label }}">
+            {{ form.llamada_realizada }}
+            <span class="weekend-option-control" aria-hidden="true"></span>
+            <span class="weekend-option-copy">
+              <strong>Llamada realizada</strong>
+              <small>Marca esta opcion si la llamada asociada a la agenda ya fue realizada.</small>
+            </span>
+          </label>
+          {% for error in form.llamada_realizada.errors %}
+            <p class="form-error">{{ error }}</p>
+          {% endfor %}
+        </div>
       </div>
 
       <div class="form-actions">
-        <button class="primary-button" type="submit">Agendar</button>
-        <button class="ghost-button" type="reset">Limpiar</button>
+        <button class="primary-button" type="submit">{{ submit_label|default:"Agendar" }}</button>
+        {% if registro_editado %}
+          <a class="ghost-button" href="{% url 'bitacora:calendario' %}?dia={{ registro_editado.dia|date:'Y-m-d' }}">Volver al calendario</a>
+        {% else %}
+          <button class="ghost-button" type="reset">Limpiar</button>
+        {% endif %}
       </div>
     </form>
+
+    {% if registro_editado %}
+      <form class="bitacora-cancel-card bitacora-card" method="post" action="{% url 'bitacora:cancelar' registro_editado.id %}">
+        {% csrf_token %}
+        <div>
+          <span class="bitacora-kicker">Cancelar agenda</span>
+          <h2>Liberar esta hora</h2>
+          <p>La agenda queda en historial como cancelada y el bloque vuelve a estar disponible.</p>
+        </div>
+        <label for="motivo_cancelacion">Motivo opcional</label>
+        <input class="form-control" id="motivo_cancelacion" name="motivo_cancelacion" autocomplete="off" placeholder="Ej: reprogramado por disponibilidad">
+        <button class="danger-button" type="submit" onclick="return confirm('Cancelar este agendamiento?');">Cancelar agendamiento</button>
+      </form>
+    {% endif %}
   </section>
 {% endblock %}
 
@@ -99,6 +134,7 @@
       const submit = document.querySelector(".bitacora-form-card button[type='submit']");
       const weekendInput = document.getElementById("{{ form.es_fin_de_semana.id_for_label }}");
       const disponibilidadUrl = "{% url 'bitacora:disponibilidad' %}";
+      const registroEditado = "{{ registro_editado.id|default:'' }}";
       let ocupadas = new Set({{ horas_ocupadas_json|safe }});
       let weekendTouched = Boolean(weekendInput && weekendInput.checked);
 
@@ -137,7 +173,11 @@
           revisarHora();
           return;
         }
-        const respuesta = await fetch(`${disponibilidadUrl}?dia=${encodeURIComponent(diaInput.value)}`);
+        const params = new URLSearchParams({ dia: diaInput.value });
+        if (registroEditado) {
+          params.set("excluir", registroEditado);
+        }
+        const respuesta = await fetch(`${disponibilidadUrl}?${params.toString()}`);
         const data = await respuesta.json();
         ocupadas = new Set(data.ocupadas || []);
         sugerirFinDeSemana();

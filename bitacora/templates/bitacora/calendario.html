@@ -48,9 +48,12 @@
                 <span class="month-day-body">
                   {% if day.records %}
                     {% for registro in day.records|slice:":2" %}
-                      <span class="month-day-event{% if registro.es_fin_de_semana %} is-weekend{% endif %}">
+                      <span class="month-day-event{% if registro.es_fin_de_semana %} is-weekend{% endif %}{% if registro.llamada_realizada %} call-done{% else %} call-pending{% endif %}">
                         <strong>{{ registro.hora|time:"H:i" }}</strong>
-                        <span>{{ registro.ticket }}</span>
+                        <span class="month-day-event-ticket">{{ registro.ticket }}</span>
+                        <span class="month-day-event-state{% if registro.llamada_realizada %} is-done{% else %} is-pending{% endif %}">
+                          {% if registro.llamada_realizada %}OK{% else %}Pend{% endif %}
+                        </span>
                       </span>
                     {% endfor %}
                     {% if day.ocupadas > 2 %}
@@ -68,7 +71,7 @@
                   <span>{{ day.ocupadas }} hora{% if day.ocupadas != 1 %}s{% endif %} agendada{% if day.ocupadas != 1 %}s{% endif %}</span>
                   <ul>
                     {% for registro in day.records|slice:":3" %}
-                      <li{% if registro.es_fin_de_semana %} class="is-weekend"{% endif %}>{{ registro.hora|time:"H:i" }} - {{ registro.ticket }}{% if registro.es_fin_de_semana %} - Fin de semana{% endif %}</li>
+                      <li{% if registro.es_fin_de_semana or registro.llamada_realizada %} class="{% if registro.es_fin_de_semana %}is-weekend{% endif %}{% if registro.llamada_realizada %} is-call-done{% endif %}"{% endif %}>{{ registro.hora|time:"H:i" }} - {{ registro.ticket }} - {% if registro.llamada_realizada %}Llamada realizada{% else %}Llamada pendiente{% endif %}{% if registro.es_fin_de_semana %} - Fin de semana{% endif %}</li>
                     {% endfor %}
                   </ul>
                 {% else %}
@@ -105,7 +108,28 @@
                     <strong>{{ registro.hora|time:"H:i" }}</strong>
                     <div>
                       <span>{{ registro.ticket }} / RBD {{ registro.rbd }}</span>
-                      <small>{{ registro.usuario.username }}{% if registro.es_fin_de_semana %} - Fin de semana{% endif %}</small>
+                      <small>
+                        {{ registro.usuario.username }}{% if registro.es_fin_de_semana %} - Fin de semana{% endif %}
+                        - {% if registro.llamada_realizada %}Llamada realizada{% else %}Llamada pendiente{% endif %}
+                      </small>
+                      <span class="call-state-pill{% if registro.llamada_realizada %} is-done{% else %} is-pending{% endif %}">
+                        {% if registro.llamada_realizada %}Realizada{% else %}Pendiente{% endif %}
+                      </span>
+                      {% if request.user.is_staff or registro.usuario_id == request.user.id %}
+                        <div class="day-modal-actions">
+                          <a href="{% url 'bitacora:editar' registro.id %}">Editar / Reprogramar</a>
+                          <form method="post" action="{% url 'bitacora:llamada' registro.id %}">
+                            {% csrf_token %}
+                            <button class="call-toggle-button" type="submit">
+                              {% if registro.llamada_realizada %}Marcar pendiente{% else %}Marcar realizada{% endif %}
+                            </button>
+                          </form>
+                          <form method="post" action="{% url 'bitacora:cancelar' registro.id %}" onsubmit="return confirm('Cancelar este agendamiento?');">
+                            {% csrf_token %}
+                            <button type="submit">Cancelar</button>
+                          </form>
+                        </div>
+                      {% endif %}
                     </div>
                   </li>
                 {% endfor %}
