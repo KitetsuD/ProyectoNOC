@@ -24,7 +24,7 @@ def puede_gestionar_contactos(user):
 
 
 def puede_gestionar_bitacora(user, registro):
-    return es_admin(user) or registro.usuario_id == user.id
+    return bool(user and user.is_authenticated)
 
 
 def puede_ver_recordatorio(user, recordatorio):

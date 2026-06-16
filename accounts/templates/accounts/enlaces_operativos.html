@@ -57,6 +57,10 @@
                 {% csrf_token %}
                 <button class="ghost-button" type="submit">{% if enlace.activo %}Ocultar{% else %}Publicar{% endif %}</button>
               </form>
+              <form method="post" action="{% url 'enlace_operativo_eliminar' enlace.id %}" onsubmit="return confirm('Eliminar este enlace operativo?');">
+                {% csrf_token %}
+                <button class="danger-button" type="submit">Eliminar</button>
+              </form>
             {% endif %}
           </footer>
         </article>

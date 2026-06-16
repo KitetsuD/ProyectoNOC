@@ -116,21 +116,19 @@
                       <span class="call-state-pill{% if registro.llamada_realizada %} is-done{% else %} is-pending{% endif %}">
                         {% if registro.llamada_realizada %}Realizada{% else %}Pendiente{% endif %}
                       </span>
-                      {% if request.user.is_staff or registro.usuario_id == request.user.id %}
-                        <div class="day-modal-actions">
-                          <a href="{% url 'bitacora:editar' registro.id %}">Editar / Reprogramar</a>
-                          <form method="post" action="{% url 'bitacora:llamada' registro.id %}">
-                            {% csrf_token %}
-                            <button class="call-toggle-button" type="submit">
-                              {% if registro.llamada_realizada %}Marcar pendiente{% else %}Marcar realizada{% endif %}
-                            </button>
-                          </form>
-                          <form method="post" action="{% url 'bitacora:cancelar' registro.id %}" onsubmit="return confirm('Cancelar este agendamiento?');">
-                            {% csrf_token %}
-                            <button type="submit">Cancelar</button>
-                          </form>
-                        </div>
-                      {% endif %}
+                      <div class="day-modal-actions">
+                        <a href="{% url 'bitacora:editar' registro.id %}">Editar / Reprogramar</a>
+                        <form method="post" action="{% url 'bitacora:llamada' registro.id %}">
+                          {% csrf_token %}
+                          <button class="call-toggle-button" type="submit">
+                            {% if registro.llamada_realizada %}Marcar pendiente{% else %}Marcar realizada{% endif %}
+                          </button>
+                        </form>
+                        <form method="post" action="{% url 'bitacora:cancelar' registro.id %}" onsubmit="return confirm('Cancelar este agendamiento?');">
+                          {% csrf_token %}
+                          <button type="submit">Cancelar</button>
+                        </form>
+                      </div>
                     </div>
                   </li>
                 {% endfor %}
@@ -185,17 +183,13 @@
                     {% endif %}
                   </td>
                   <td>
-                    {% if request.user.is_staff or registro.usuario_id == request.user.id %}
-                      <div class="calendar-agenda-actions">
-                        <a href="{% url 'bitacora:editar' registro.id %}">Editar</a>
-                        <form method="post" action="{% url 'bitacora:cancelar' registro.id %}" onsubmit="return confirm('Cancelar este agendamiento?');">
-                          {% csrf_token %}
-                          <button type="submit">Cancelar</button>
-                        </form>
-                      </div>
-                    {% else %}
-                      <span>Solo lectura</span>
-                    {% endif %}
+                    <div class="calendar-agenda-actions">
+                      <a href="{% url 'bitacora:editar' registro.id %}">Editar</a>
+                      <form method="post" action="{% url 'bitacora:cancelar' registro.id %}" onsubmit="return confirm('Cancelar este agendamiento?');">
+                        {% csrf_token %}
+                        <button type="submit">Cancelar</button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               {% endfor %}

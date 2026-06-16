@@ -284,6 +284,16 @@ def enlace_operativo_toggle(request, enlace_id):
 
 
 @_admin_required
+def enlace_operativo_eliminar(request, enlace_id):
+    enlace = get_object_or_404(EnlaceOperativo, pk=enlace_id)
+    if request.method == "POST":
+        titulo = enlace.titulo
+        enlace.delete()
+        messages.success(request, f"Enlace {titulo} eliminado correctamente.")
+    return redirect("enlaces_operativos")
+
+
+@_admin_required
 def procedimiento_toggle(request, procedimiento_id):
     procedimiento = get_object_or_404(Procedimiento, pk=procedimiento_id)
     if request.method == "POST":

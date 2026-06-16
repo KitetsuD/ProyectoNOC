@@ -13,6 +13,7 @@ urlpatterns = [
     path("procedimientos/<int:procedimiento_id>/archivo/", views.procedimiento_archivo, name="procedimiento_archivo"),
     path("enlaces/", views.enlaces_operativos, name="enlaces_operativos"),
     path("enlaces/<int:enlace_id>/toggle/", views.enlace_operativo_toggle, name="enlace_operativo_toggle"),
+    path("enlaces/<int:enlace_id>/eliminar/", views.enlace_operativo_eliminar, name="enlace_operativo_eliminar"),
     path("sicret/", views.sicret, name="sicret"),
     path("sicret/tickets/", views.sicret_tickets, name="sicret_tickets"),
     path("sicret/tickets/<int:solicitud_id>/estado/", views.sicret_ticket_estado, name="sicret_ticket_estado"),
