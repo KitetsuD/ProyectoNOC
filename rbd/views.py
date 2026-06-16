@@ -3,11 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-
-from accounts.permissions import puede_gestionar_contactos
 
 from .forms import RbdSearchForm
 from .models import RbdContacto, RbdServicio
@@ -178,11 +175,13 @@ def _build_detail(servicio):
         _metric("BW bajada", _speed(servicio.bw)),
         _item("Codigo OSS", servicio.codigo_servicio_oss),
     ]
+    servicio_texto = "\n".join(f"{item['label']}\t{item['value']}" for item in servicio_items)
     copiar_completo = _full_copy_rows(servicio, contactos)
 
     return {
         "colegio": colegio,
         "servicio": servicio_items,
+        "servicio_texto": servicio_texto,
         "contactos": contactos,
         "copiar_completo": copiar_completo,
         "copiar_completo_texto": "\n".join(f"{row['label']}\t{row['value']}" for row in copiar_completo),
@@ -230,8 +229,6 @@ def _guardar_contactos(request, servicio):
 @login_required
 def buscar_rbd(request):
     if request.method == "POST" and request.POST.get("accion") == "guardar_contactos":
-        if not puede_gestionar_contactos(request.user):
-            raise PermissionDenied
         servicio = get_object_or_404(RbdServicio, rbd=request.POST.get("rbd"))
         errores = _guardar_contactos(request, servicio)
         if errores:
@@ -247,6 +244,7 @@ def buscar_rbd(request):
     detail = {
         "colegio": [],
         "servicio": [],
+        "servicio_texto": "",
         "contactos": [_empty_contact(1), _empty_contact(2), _empty_contact(3)],
         "copiar_completo": [],
         "copiar_completo_texto": "",
@@ -263,7 +261,7 @@ def buscar_rbd(request):
         "busqueda_realizada": bool(raw_rbd),
         "rbd_consultado": raw_rbd,
         "total_rbd": RbdServicio.objects.count(),
-        "puede_editar_contactos": puede_gestionar_contactos(request.user),
+        "puede_editar_contactos": True,
         **detail,
     }
     return render(request, "rbd/buscar.html", context)

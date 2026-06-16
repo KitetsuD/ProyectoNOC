@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Procedimiento, SolicitudSicret
+from .models import EnlaceOperativo, Procedimiento, SolicitudSicret
 
 
 @admin.register(Procedimiento)
@@ -14,8 +14,17 @@ class ProcedimientoAdmin(admin.ModelAdmin):
 
 @admin.register(SolicitudSicret)
 class SolicitudSicretAdmin(admin.ModelAdmin):
-    list_display = ("ticket_netcracker", "rbd", "nombre_escuela", "estado_sicret", "estado_enlace", "descripcion_falla", "creado_por", "creado_en")
+    list_display = ("ticket_netcracker", "ticket_sicret", "rbd", "nombre_escuela", "estado_sicret", "estado_enlace", "descripcion_falla", "creado_por", "creado_en")
     list_filter = ("estado_sicret", "estado_enlace", "descripcion_falla", "creado_en")
-    search_fields = ("ticket_netcracker", "rbd", "nombre_escuela", "comuna", "ip_servicio", "nombre_contacto")
+    search_fields = ("ticket_netcracker", "ticket_sicret", "rbd", "nombre_escuela", "comuna", "ip_servicio", "nombre_contacto")
     readonly_fields = ("creado_en", "estado_sicret_actualizado_en")
     ordering = ("-creado_en",)
+
+
+@admin.register(EnlaceOperativo)
+class EnlaceOperativoAdmin(admin.ModelAdmin):
+    list_display = ("titulo", "categoria", "activo", "creado_por", "creado_en")
+    list_filter = ("activo", "categoria")
+    search_fields = ("titulo", "categoria", "descripcion", "url")
+    readonly_fields = ("creado_en", "actualizado_en")
+    ordering = ("categoria", "titulo")

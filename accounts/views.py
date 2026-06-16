@@ -1,14 +1,16 @@
 import os
 import tempfile
 from io import StringIO
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.db.models import Q
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -17,9 +19,10 @@ from rbd.forms import AdminRbdSearchForm, AdminRbdServicioForm
 from rbd.models import RbdServicio
 from rbd.services.carga_completa import export_carga_completa
 
-from .forms import AdminCargaDatosForm, AdminUserForm, ProcedimientoForm, SicretSolicitudForm
-from .models import Procedimiento, SolicitudSicret
+from .forms import AdminCargaDatosForm, AdminTutorialDocumentoForm, AdminTutorialForm, AdminUserForm, EnlaceOperativoForm, ProcedimientoForm, SicretSolicitudForm
+from .models import EnlaceOperativo, Procedimiento, SolicitudSicret
 from .permissions import admin_required
+from .services.tutoriales_docx import importar_tutoriales_docx
 
 
 _admin_required = admin_required
@@ -114,6 +117,12 @@ def dashboard(request):
             "state": "Disponible",
             "url": reverse("procedimientos"),
         },
+        {
+            "title": "Enlaces",
+            "description": "Repositorio de accesos operativos a plataformas internas y proveedores.",
+            "state": "Disponible",
+            "url": reverse("enlaces_operativos"),
+        },
     ]
     summary = [
         ("Gestiones", "0"),
@@ -133,26 +142,6 @@ def dashboard(request):
 
 @login_required
 def procedimientos(request):
-    if request.method == "POST":
-        form = ProcedimientoForm(request.POST, user=request.user)
-        if form.is_valid():
-            procedimiento = form.save(commit=False)
-            procedimiento.creado_por = request.user
-            procedimiento.actualizado_por = request.user
-            if not request.user.is_staff:
-                procedimiento.responsable = request.user
-                procedimiento.activo = True
-            if not procedimiento.responsable:
-                procedimiento.responsable = request.user
-            procedimiento.save()
-            messages.success(request, "Tutorial operativo creado correctamente.")
-            return redirect("procedimientos")
-    else:
-        form = ProcedimientoForm(
-            initial={"activo": True, "tipo": Procedimiento.TIPO_PROCEDIMIENTO},
-            user=request.user,
-        )
-
     listado = Procedimiento.objects.select_related("creado_por", "actualizado_por", "responsable")
     documentos = listado.filter(tipo=Procedimiento.TIPO_PROCEDIMIENTO)
     gestiones = listado.filter(tipo=Procedimiento.TIPO_GESTION)
@@ -169,12 +158,129 @@ def procedimientos(request):
         request,
         "accounts/procedimientos.html",
         {
-            "form": form,
             "documentos": documentos,
             "procedimientos": pendientes,
             "completados": completados[:10],
         },
     )
+
+
+@_admin_required
+def admin_tutoriales(request):
+    import_form = AdminTutorialDocumentoForm()
+    if request.method == "POST" and request.POST.get("accion") == "importar_docx":
+        form = AdminTutorialForm(initial={"activo": True})
+        import_form = AdminTutorialDocumentoForm(request.POST, request.FILES)
+        if import_form.is_valid():
+            try:
+                resultado = importar_tutoriales_docx(import_form.cleaned_data["archivo"], request.user)
+            except ValueError as exc:
+                import_form.add_error("archivo", str(exc))
+            else:
+                messages.success(
+                    request,
+                    f"Documento procesado: {resultado['total']} tutoriales, {resultado['creados']} nuevos y {resultado['actualizados']} actualizados.",
+                )
+                return redirect("admin_tutoriales")
+    elif request.method == "POST":
+        form = AdminTutorialForm(request.POST, request.FILES)
+        if form.is_valid():
+            tutorial = form.save(commit=False)
+            tutorial.tipo = Procedimiento.TIPO_PROCEDIMIENTO
+            tutorial.estado = Procedimiento.ESTADO_PENDIENTE
+            tutorial.prioridad = Procedimiento.PRIORIDAD_ALTA
+            tutorial.fecha_compromiso = None
+            tutorial.resultado = ""
+            tutorial.creado_por = request.user
+            tutorial.actualizado_por = request.user
+            tutorial.responsable = request.user
+            tutorial.save()
+            messages.success(request, "Tutorial operativo cargado correctamente.")
+            return redirect("admin_tutoriales")
+    else:
+        form = AdminTutorialForm(initial={"activo": True})
+
+    tutoriales = Procedimiento.objects.filter(
+        tipo=Procedimiento.TIPO_PROCEDIMIENTO
+    ).order_by("orden", "categoria", "titulo")
+
+    return render(
+        request,
+        "accounts/admin_tutoriales.html",
+        {
+            "form": form,
+            "import_form": import_form,
+            "tutoriales": tutoriales,
+        },
+    )
+
+
+@_admin_required
+def admin_tutoriales_documento_base(request):
+    documento = Path(settings.BASE_DIR) / "docs" / "ProyectoNOC_Tutoriales_Operativos_Base.docx"
+    if not documento.exists():
+        messages.error(request, "El documento base de tutoriales no esta disponible.")
+        return redirect("admin_tutoriales")
+    return FileResponse(
+        open(documento, "rb"),
+        as_attachment=True,
+        filename=documento.name,
+    )
+
+
+@login_required
+def procedimiento_archivo(request, procedimiento_id):
+    procedimiento = get_object_or_404(Procedimiento, pk=procedimiento_id)
+    if not request.user.is_staff and not procedimiento.activo:
+        raise PermissionDenied
+    if not procedimiento.archivo:
+        messages.error(request, "El tutorial no tiene archivo cargado.")
+        return redirect("procedimientos")
+    return FileResponse(
+        procedimiento.archivo.open("rb"),
+        as_attachment=False,
+        filename=procedimiento.archivo.name.rsplit("/", 1)[-1],
+    )
+
+
+@login_required
+def enlaces_operativos(request):
+    if request.method == "POST":
+        if not request.user.is_staff:
+            raise PermissionDenied
+        form = EnlaceOperativoForm(request.POST)
+        if form.is_valid():
+            enlace = form.save(commit=False)
+            enlace.creado_por = request.user
+            enlace.save()
+            messages.success(request, "Enlace operativo creado correctamente.")
+            return redirect("enlaces_operativos")
+    else:
+        form = EnlaceOperativoForm(initial={"activo": True})
+
+    enlaces = EnlaceOperativo.objects.all()
+    if not request.user.is_staff:
+        enlaces = enlaces.filter(activo=True)
+
+    return render(
+        request,
+        "accounts/enlaces_operativos.html",
+        {
+            "form": form,
+            "enlaces": enlaces,
+        },
+    )
+
+
+@_admin_required
+def enlace_operativo_toggle(request, enlace_id):
+    enlace = get_object_or_404(EnlaceOperativo, pk=enlace_id)
+    if request.method == "POST":
+        enlace.activo = not enlace.activo
+        enlace.save(update_fields=["activo", "actualizado_en"])
+        estado = "publicado" if enlace.activo else "ocultado"
+        messages.success(request, f"Enlace {estado}.")
+    return redirect("enlaces_operativos")
 
 
 @_admin_required
@@ -186,7 +292,7 @@ def procedimiento_toggle(request, procedimiento_id):
         procedimiento.save(update_fields=["activo", "actualizado_por", "actualizado_en"])
         estado = "publicado" if procedimiento.activo else "ocultado"
         messages.success(request, f"Procedimiento {estado}.")
-    return redirect("procedimientos")
+    return redirect("admin_tutoriales")
 
 
 @login_required
@@ -223,8 +329,6 @@ def sicret_tickets(request):
         "creado_por",
         "estado_sicret_actualizado_por",
     )
-    if not request.user.is_staff:
-        solicitudes_base = solicitudes_base.filter(creado_por=request.user)
 
     query = (request.GET.get("q") or "").strip()
     estado = (request.GET.get("estado") or "").strip()
@@ -233,10 +337,12 @@ def sicret_tickets(request):
     if query:
         solicitudes_base = solicitudes_base.filter(
             Q(ticket_netcracker__icontains=query)
+            | Q(ticket_sicret__icontains=query)
             | Q(rbd__icontains=query)
             | Q(nombre_escuela__icontains=query)
             | Q(ip_servicio__icontains=query)
             | Q(instancia__icontains=query)
+            | Q(comentario_encargado__icontains=query)
         )
 
     resumen_estados = [
@@ -251,6 +357,9 @@ def sicret_tickets(request):
     solicitudes = solicitudes_base
     if estado in estados_validos:
         solicitudes = solicitudes.filter(estado_sicret=estado)
+    else:
+        estado = ""
+        solicitudes = solicitudes.exclude(estado_sicret=SolicitudSicret.ESTADO_SICRET_CERRADO)
 
     total = solicitudes.count()
 
@@ -274,8 +383,6 @@ def sicret_ticket_estado(request, solicitud_id):
         return redirect("sicret_tickets")
 
     solicitud = get_object_or_404(SolicitudSicret, pk=solicitud_id)
-    if not request.user.is_staff and solicitud.creado_por_id != request.user.id:
-        raise PermissionDenied
 
     estado = (request.POST.get("estado_sicret") or "").strip()
     estados_validos = {valor for valor, _ in SolicitudSicret.ESTADOS_SICRET}
@@ -283,16 +390,22 @@ def sicret_ticket_estado(request, solicitud_id):
         messages.error(request, "Estado SICRET no valido.")
         return redirect("sicret_tickets")
 
+    update_fields = [
+        "estado_sicret",
+        "estado_sicret_actualizado_por",
+        "estado_sicret_actualizado_en",
+    ]
+
     solicitud.estado_sicret = estado
+    if "ticket_sicret" in request.POST:
+        solicitud.ticket_sicret = (request.POST.get("ticket_sicret") or "").strip()
+        update_fields.append("ticket_sicret")
+    if "comentario_encargado" in request.POST:
+        solicitud.comentario_encargado = (request.POST.get("comentario_encargado") or "").strip()
+        update_fields.append("comentario_encargado")
     solicitud.estado_sicret_actualizado_por = request.user
     solicitud.estado_sicret_actualizado_en = timezone.now()
-    solicitud.save(
-        update_fields=[
-            "estado_sicret",
-            "estado_sicret_actualizado_por",
-            "estado_sicret_actualizado_en",
-        ]
-    )
+    solicitud.save(update_fields=update_fields)
     messages.success(request, f"Ticket {solicitud.ticket_netcracker} actualizado.")
     return redirect("sicret_tickets")
 

@@ -27,7 +27,7 @@
     <form class="sicret-ticket-filters" method="get">
       <label>
         <span>Buscar</span>
-        <input class="sicret-control" type="search" name="q" value="{{ query }}" placeholder="Ticket, RBD, escuela, IP o instancia">
+        <input class="sicret-control" type="search" name="q" value="{{ query }}" placeholder="Ticket, folio SICRET, RBD, escuela, IP o comentario">
       </label>
       <label>
         <span>Estado</span>
@@ -58,9 +58,11 @@
             <thead>
               <tr>
                 <th>Ticket</th>
+                <th>Ticket SICRET</th>
                 <th>RBD / escuela</th>
                 <th>Servicio</th>
                 <th>Diagnostico</th>
+                <th>Comentario</th>
                 <th>Estado SICRET</th>
                 <th>Actualizar</th>
               </tr>
@@ -72,6 +74,9 @@
                     <strong>{{ solicitud.ticket_netcracker }}</strong>
                     <small>{{ solicitud.instancia }}</small>
                     <small>{{ solicitud.creado_en|date:"d/m/Y H:i" }} - {{ solicitud.creado_por.username }}</small>
+                  </td>
+                  <td>
+                    <input class="sicret-control sicret-table-input" name="ticket_sicret" value="{{ solicitud.ticket_sicret }}" autocomplete="off" placeholder="Pendiente" form="sicretUpdate{{ solicitud.id }}">
                   </td>
                   <td>
                     <strong>RBD {{ solicitud.rbd }}</strong>
@@ -93,6 +98,9 @@
                     {% endif %}
                   </td>
                   <td>
+                    <textarea class="sicret-control sicret-table-comment" name="comentario_encargado" rows="2" placeholder="Sin comentario" form="sicretUpdate{{ solicitud.id }}">{{ solicitud.comentario_encargado }}</textarea>
+                  </td>
+                  <td>
                     <span class="sicret-workflow-status sicret-workflow-status-{{ solicitud.estado_sicret }}">
                       {{ solicitud.get_estado_sicret_display }}
                     </span>
@@ -103,9 +111,9 @@
                     {% endif %}
                   </td>
                   <td>
-                    <form class="sicret-state-form" method="post" action="{% url 'sicret_ticket_estado' solicitud.id %}">
+                    <form class="sicret-state-form" id="sicretUpdate{{ solicitud.id }}" method="post" action="{% url 'sicret_ticket_estado' solicitud.id %}">
                       {% csrf_token %}
-                      <select class="sicret-control" name="estado_sicret" aria-label="Estado SICRET de {{ solicitud.ticket_netcracker }}">
+                      <select class="sicret-control sicret-compact-select" name="estado_sicret" aria-label="Estado SICRET de {{ solicitud.ticket_netcracker }}">
                         {% for value, label in estados_sicret %}
                           <option value="{{ value }}"{% if solicitud.estado_sicret == value %} selected{% endif %}>{{ label }}</option>
                         {% endfor %}

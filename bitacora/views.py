@@ -291,12 +291,15 @@ def calendario_bitacora(request):
         dia__gte=timezone.localdate(),
         estado=RegistroBitacora.ESTADO_AGENDADA,
     ).order_by("dia", "hora")[:12]
+    lista_agendas = RegistroBitacora.objects.select_related("usuario").filter(
+        estado=RegistroBitacora.ESTADO_AGENDADA,
+    ).order_by("dia", "hora")[:40]
     agenda = _agenda_context(dia_calendario)
     month = _month_context(dia_calendario)
     return render(
         request,
         "bitacora/calendario.html",
-        {"proximos": proximos, **agenda, **month},
+        {"proximos": proximos, "lista_agendas": lista_agendas, **agenda, **month},
     )
 
 

@@ -1,0 +1,191 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Tutoriales Admin | ProyectoNOC{% endblock %}
+{% block encabezado %}Tutoriales Admin{% endblock %}
+{% block menu_admin_tutoriales %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="noc-admin-page noc-tutorial-admin-page">
+    <section class="noc-upload-hero">
+      <div>
+        <span>ADMIN</span>
+        <h2>Carga de tutoriales operativos</h2>
+        <p>Administra los tutoriales que ven los operadores y carga documentos de apoyo cuando cambie un protocolo.</p>
+      </div>
+    </section>
+
+    <section class="noc-upload-layout">
+      <article class="noc-upload-guide" aria-label="Uso de la carga de tutoriales">
+        <div class="noc-upload-guide-head">
+          <strong>Solo perfil ADMIN</strong>
+          <span>PDF / Word / Excel / PowerPoint</span>
+        </div>
+        <div class="noc-upload-steps">
+          <div>
+            <span>1</span>
+            <p>Completa nombre, caso y pasos visibles para el operador.</p>
+          </div>
+          <div>
+            <span>2</span>
+            <p>Adjunta el documento completo o deja un enlace de apoyo.</p>
+          </div>
+          <div>
+            <span>3</span>
+            <p>Publica u oculta el tutorial sin borrarlo del historial.</p>
+          </div>
+        </div>
+      </article>
+
+      <section class="noc-admin-panel">
+        <div class="noc-admin-panel-head">
+          <div>
+            <span>Carga automatica</span>
+            <h2>Importar documento base</h2>
+          </div>
+        </div>
+
+        <form class="noc-admin-upload-form noc-tutorial-import-form" method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="importar_docx">
+          <div class="noc-admin-form-grid noc-admin-form-grid-single">
+            <div class="noc-admin-field{% if import_form.archivo.errors %} has-error{% endif %}">
+              <label for="{{ import_form.archivo.id_for_label }}">{{ import_form.archivo.label }}</label>
+              {{ import_form.archivo }}
+              {% for error in import_form.archivo.errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="noc-admin-actions">
+            <button class="primary-button" type="submit">Importar tutoriales</button>
+          </div>
+        </form>
+      </section>
+    </section>
+
+    <section class="noc-upload-layout noc-tutorial-manual-layout">
+      <article class="noc-upload-guide" aria-label="Carga manual de tutoriales">
+        <div class="noc-upload-guide-head">
+          <strong>Carga manual</strong>
+          <span>Registro individual</span>
+        </div>
+        <div class="noc-upload-steps">
+          <div>
+            <span>1</span>
+            <p>Usa esta opcion cuando quieras agregar solo un procedimiento.</p>
+          </div>
+          <div>
+            <span>2</span>
+            <p>Para cargas completas, usa el documento base de arriba.</p>
+          </div>
+        </div>
+      </article>
+
+      <section class="noc-admin-panel">
+        <div class="noc-admin-panel-head">
+          <div>
+            <span>Nuevo tutorial</span>
+            <h2>Cargar informacion manual</h2>
+          </div>
+        </div>
+
+        <form class="noc-admin-upload-form" method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="form-non-field-errors">
+              {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="noc-admin-form-grid">
+            {% for field in form %}
+              <div class="noc-admin-field{% if field.name == 'contenido' or field.name == 'descripcion' or field.name == 'enlace' or field.name == 'archivo' %} is-wide{% endif %}{% if field.field.widget.input_type == 'checkbox' %} is-check{% endif %}{% if field.errors %} has-error{% endif %}">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                  <label class="noc-admin-check-row" for="{{ field.id_for_label }}">
+                    {{ field }}
+                    <span>{{ field.label }}</span>
+                  </label>
+                {% else %}
+                  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                {% endif %}
+                {% for error in field.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="noc-admin-actions">
+            <button class="primary-button" type="submit">Guardar tutorial</button>
+          </div>
+        </form>
+      </section>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>Publicacion</span>
+          <h2>Tutoriales cargados</h2>
+        </div>
+      </div>
+
+      <div class="noc-admin-table-wrap">
+        <table class="noc-users-table noc-tutorial-admin-table">
+          <thead>
+            <tr>
+              <th>Orden</th>
+              <th>Tutorial</th>
+              <th>Documento</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tutorial in tutoriales %}
+              <tr>
+                <td>{{ tutorial.orden }}</td>
+                <td>
+                  <strong>{{ tutorial.titulo }}</strong>
+                  <small>{{ tutorial.categoria|default:"Sin categoria" }}</small>
+                  <small>{{ tutorial.descripcion|default:"Sin descripcion" }}</small>
+                </td>
+                <td>
+                  {% if tutorial.archivo %}
+                    <a class="noc-user-action" href="{% url 'procedimiento_archivo' tutorial.id %}" target="_blank" rel="noreferrer">Abrir archivo</a>
+                  {% elif tutorial.enlace %}
+                    <a class="noc-user-action" href="{{ tutorial.enlace }}" target="_blank" rel="noreferrer">Abrir enlace</a>
+                  {% else %}
+                    <span class="noc-admin-badge is-inactive">Sin apoyo</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="noc-admin-badge{% if tutorial.activo %} is-active{% else %} is-inactive{% endif %}">
+                    {% if tutorial.activo %}Publicado{% else %}Oculto{% endif %}
+                  </span>
+                </td>
+                <td>
+                  <form method="post" action="{% url 'procedimiento_toggle' tutorial.id %}">
+                    {% csrf_token %}
+                    <button class="noc-user-action{% if tutorial.activo %} is-warning{% else %} is-ok{% endif %}" type="submit">
+                      {% if tutorial.activo %}Ocultar{% else %}Publicar{% endif %}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5">
+                  <div class="noc-users-empty">Sin tutoriales cargados.</div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+{% endblock %}

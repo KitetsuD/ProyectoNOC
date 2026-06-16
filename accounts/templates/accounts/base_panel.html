@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}ProyectoNOC{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-43">
+  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-46">
 </head>
 <body>
   <div class="admin-shell" id="adminShell">
@@ -69,6 +69,13 @@
             </svg>
             <span>Tutoriales</span>
           </a>
+          <a href="{% url 'enlaces_operativos' %}" class="{% block menu_enlaces %}{% endblock %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"></path>
+              <path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1"></path>
+            </svg>
+            <span>Enlaces</span>
+          </a>
           <a href="{% url 'sicret' %}" class="{% block menu_sicret %}{% endblock %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 5h16v14H4Z"></path>
@@ -97,6 +104,15 @@
                 <path d="M8 20h8"></path>
               </svg>
               <span>Carga de datos</span>
+            </a>
+            <a href="{% url 'admin_tutoriales' %}" class="{% block menu_admin_tutoriales %}{% endblock %}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 4h16v16H4Z"></path>
+                <path d="M8 8h8"></path>
+                <path d="M8 12h8"></path>
+                <path d="M8 16h5"></path>
+              </svg>
+              <span>Tutoriales Admin</span>
             </a>
             <a href="{% url 'admin_rbd' %}" class="{% block menu_admin_rbd %}{% endblock %}">
               <svg viewBox="0 0 24 24" aria-hidden="true">

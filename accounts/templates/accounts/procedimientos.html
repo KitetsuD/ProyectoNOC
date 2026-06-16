@@ -73,7 +73,17 @@
             {% endif %}
 
             <footer class="ops-tutorial-footer">
-              {% if documento.enlace %}
+              {% if documento.archivo %}
+                <a class="ops-document-link" href="{% url 'procedimiento_archivo' documento.id %}" target="_blank" rel="noreferrer">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path>
+                    <path d="M14 2v6h6"></path>
+                    <path d="M8 13h8"></path>
+                    <path d="M8 17h5"></path>
+                  </svg>
+                  Abrir documento completo
+                </a>
+              {% elif documento.enlace %}
                 <a class="ops-document-link" href="{{ documento.enlace }}" target="_blank" rel="noreferrer">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path>
@@ -83,14 +93,6 @@
                   </svg>
                   Abrir documento completo
                 </a>
-              {% endif %}
-              {% if request.user.is_staff %}
-                <form method="post" action="{% url 'procedimiento_toggle' documento.id %}">
-                  {% csrf_token %}
-                  <button class="ghost-button" type="submit">
-                    {% if documento.activo %}Ocultar{% else %}Publicar{% endif %}
-                  </button>
-                </form>
               {% endif %}
             </footer>
           </article>
@@ -134,7 +136,9 @@
                 Responsable: {{ procedimiento.responsable.username|default:"Sin asignar" }}
               </small>
               <footer>
-                {% if procedimiento.enlace %}
+                {% if procedimiento.archivo %}
+                  <a href="{% url 'procedimiento_archivo' procedimiento.id %}" target="_blank" rel="noreferrer">Abrir apoyo</a>
+                {% elif procedimiento.enlace %}
                   <a href="{{ procedimiento.enlace }}" target="_blank" rel="noreferrer">Abrir apoyo</a>
                 {% endif %}
                 <div class="ops-inline-actions">

@@ -29,7 +29,7 @@
             <div class="rbd-chip-title">BPI</div>
             <div class="rbd-chip-body">
               <strong>
-                {% include "rbd/partials/copiable_value.html" with value=resultado.bpi|default:"Sin Informacion" label="BPI" %}
+                {% include "rbd/partials/sidebar_copy_value.html" with value=resultado.bpi|default:"Sin Informacion" label="BPI" %}
               </strong>
             </div>
           </div>
@@ -38,7 +38,7 @@
             <div class="rbd-chip-title">EF</div>
             <div class="rbd-chip-body">
               <strong>
-                {% include "rbd/partials/copiable_value.html" with value=resultado.codigo_servicio_oss|default:"Sin codigo OSS" label="EF" %}
+                {% include "rbd/partials/sidebar_copy_value.html" with value=resultado.codigo_servicio_oss|default:"Sin codigo OSS" label="EF" %}
               </strong>
             </div>
           </div>
@@ -47,7 +47,7 @@
             <div class="rbd-chip-title">IP</div>
             <div class="rbd-chip-body">
               <strong>
-                {% include "rbd/partials/copiable_value.html" with value=resultado.ip|default:"Sin informacion" label="IP" %}
+                {% include "rbd/partials/sidebar_copy_value.html" with value=resultado.ip|default:"Sin informacion" label="IP" %}
               </strong>
             </div>
           </div>
@@ -84,9 +84,7 @@
                     {% for item in colegio %}
                       <div>
                         <dt>{{ item.label }}</dt>
-                        <dd>
-                          {% include "rbd/partials/copiable_value.html" with value=item.value label=item.label %}
-                        </dd>
+                        <dd>{{ item.value }}</dd>
                       </div>
                     {% endfor %}
                   </dl>
@@ -102,17 +100,23 @@
                   <header class="rbd-card-header">
                     <h2>Datos del servicio</h2>
                     <span>{{ resultado.tecnologia_resumen }}</span>
+                    <button class="rbd-service-copy-button" type="button" data-copy-source="rbdServiceCopyText" aria-label="Copiar informacion del servicio" title="Copiar informacion del servicio">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 8h10v12H8Z"></path>
+                        <path d="M5 16H4V4h12v1"></path>
+                      </svg>
+                      Copiar todo
+                    </button>
                   </header>
                   <dl class="rbd-info-grid service">
                     {% for item in servicio %}
                       <div>
                         <dt>{{ item.label }}</dt>
-                        <dd>
-                          {% include "rbd/partials/copiable_value.html" with value=item.value label=item.label %}
-                        </dd>
+                        <dd>{{ item.value }}</dd>
                       </div>
                     {% endfor %}
                   </dl>
+                  <textarea id="rbdServiceCopyText" hidden>{{ servicio_texto }}</textarea>
                 </article>
               </section>
             </div>
@@ -128,9 +132,7 @@
                     <h2>Contactos</h2>
                     <span class="rbd-contact-state" data-contact-state>Solo lectura</span>
                   </div>
-                  {% if puede_editar_contactos %}
-                    <button class="rbd-contact-edit-toggle" type="button" data-contact-edit-toggle>Editar</button>
-                  {% endif %}
+                  <button class="rbd-contact-edit-toggle" type="button" data-contact-edit-toggle>Editar</button>
                 </header>
                 <form class="rbd-contact-editor is-readonly" method="post" data-contact-editor>
                   {% csrf_token %}

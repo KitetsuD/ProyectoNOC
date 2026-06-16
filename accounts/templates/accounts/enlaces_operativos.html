@@ -1,0 +1,71 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Enlaces operativos | ProyectoNOC{% endblock %}
+{% block encabezado %}Enlaces operativos{% endblock %}
+{% block menu_enlaces %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="links-page">
+    <section class="links-hero">
+      <div>
+        <span>Repositorio</span>
+        <h2>Accesos operativos</h2>
+        <p>Accesos rapidos a plataformas, proveedores y herramientas de soporte usadas por el NOC.</p>
+      </div>
+      <strong>{{ enlaces|length }}</strong>
+    </section>
+
+    {% if request.user.is_staff %}
+      <section class="links-admin-card">
+        <header>
+          <span>Admin</span>
+          <h2>Agregar enlace</h2>
+        </header>
+        <form class="links-admin-form" method="post">
+          {% csrf_token %}
+          <div class="links-admin-grid">
+            {% for field in form %}
+              <label{% if field.name == "activo" %} class="links-check-row"{% endif %}>
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% for error in field.errors %}<small>{{ error }}</small>{% endfor %}
+              </label>
+            {% endfor %}
+          </div>
+          <div class="links-admin-actions">
+            <button class="primary-button" type="submit">Guardar enlace</button>
+          </div>
+        </form>
+      </section>
+    {% endif %}
+
+    <section class="links-grid">
+      {% for enlace in enlaces %}
+        <article class="links-card{% if not enlace.activo %} is-hidden-link{% endif %}">
+          <div>
+            <span>{{ enlace.categoria|default:"Enlace" }}</span>
+            <h2>{{ enlace.titulo }}</h2>
+            {% if enlace.descripcion %}
+              <p>{{ enlace.descripcion }}</p>
+            {% endif %}
+          </div>
+          <footer>
+            <a class="primary-button" href="{{ enlace.url }}" target="_blank" rel="noreferrer">Abrir</a>
+            <button class="ghost-button" type="button" data-copy-value="{{ enlace.url }}">Copiar</button>
+            {% if request.user.is_staff %}
+              <form method="post" action="{% url 'enlace_operativo_toggle' enlace.id %}">
+                {% csrf_token %}
+                <button class="ghost-button" type="submit">{% if enlace.activo %}Ocultar{% else %}Publicar{% endif %}</button>
+              </form>
+            {% endif %}
+          </footer>
+        </article>
+      {% empty %}
+        <article class="links-empty">
+          <strong>Sin enlaces cargados</strong>
+          <span>Cuando el administrador agregue accesos, apareceran en esta pantalla.</span>
+        </article>
+      {% endfor %}
+    </section>
+  </section>
+{% endblock %}

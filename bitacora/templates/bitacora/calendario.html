@@ -112,6 +112,7 @@
                         {{ registro.usuario.username }}{% if registro.es_fin_de_semana %} - Fin de semana{% endif %}
                         - {% if registro.llamada_realizada %}Llamada realizada{% else %}Llamada pendiente{% endif %}
                       </small>
+                      <a class="day-modal-ticket-link" href="{{ registro.vinculo_ticket }}" target="_blank" rel="noreferrer">Abrir ticket</a>
                       <span class="call-state-pill{% if registro.llamada_realizada %} is-done{% else %} is-pending{% endif %}">
                         {% if registro.llamada_realizada %}Realizada{% else %}Pendiente{% endif %}
                       </span>
@@ -142,6 +143,69 @@
         {% endfor %}
       {% endfor %}
     </div>
+
+    <section class="calendar-agenda-list">
+      <header>
+        <div>
+          <span>Seguimiento</span>
+          <h2>Agendamientos activos</h2>
+        </div>
+      </header>
+      {% if lista_agendas %}
+        <div class="calendar-agenda-table-wrap">
+          <table class="calendar-agenda-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Ticket</th>
+                <th>RBD</th>
+                <th>Usuario</th>
+                <th>Tipo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for registro in lista_agendas %}
+                <tr>
+                  <td>
+                    <strong>{{ registro.dia|date:"d/m/Y" }}</strong>
+                    <small>{{ registro.hora|time:"H:i" }}</small>
+                  </td>
+                  <td>
+                    <strong>{{ registro.ticket }}</strong>
+                    <a href="{{ registro.vinculo_ticket }}" target="_blank" rel="noreferrer">Abrir ticket</a>
+                  </td>
+                  <td>RBD {{ registro.rbd }}</td>
+                  <td>{{ registro.usuario.username }}</td>
+                  <td>
+                    {% if registro.es_fin_de_semana %}
+                      <span class="calendar-agenda-pill is-weekend">Fin de semana</span>
+                    {% else %}
+                      <span class="calendar-agenda-pill">Regular</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if request.user.is_staff or registro.usuario_id == request.user.id %}
+                      <div class="calendar-agenda-actions">
+                        <a href="{% url 'bitacora:editar' registro.id %}">Editar</a>
+                        <form method="post" action="{% url 'bitacora:cancelar' registro.id %}" onsubmit="return confirm('Cancelar este agendamiento?');">
+                          {% csrf_token %}
+                          <button type="submit">Cancelar</button>
+                        </form>
+                      </div>
+                    {% else %}
+                      <span>Solo lectura</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="calendar-agenda-empty">Sin agendamientos activos.</p>
+      {% endif %}
+    </section>
   </section>
 {% endblock %}
 

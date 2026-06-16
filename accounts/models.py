@@ -35,6 +35,7 @@ class Procedimiento(models.Model):
     descripcion = models.CharField(max_length=260, blank=True)
     contenido = models.TextField(blank=True)
     enlace = models.URLField(max_length=500, blank=True)
+    archivo = models.FileField(upload_to="procedimientos/", blank=True)
     orden = models.PositiveIntegerField(default=0)
     estado = models.CharField(max_length=16, choices=ESTADOS, default=ESTADO_PENDIENTE)
     prioridad = models.CharField(max_length=12, choices=PRIORIDADES, default=PRIORIDAD_MEDIA)
@@ -83,6 +84,12 @@ class Procedimiento(models.Model):
                 texto = texto.split(". ", 1)[1].strip()
             pasos.append(texto)
         return pasos
+
+    @property
+    def documento_url(self):
+        if self.archivo:
+            return self.archivo.url
+        return self.enlace
 
     @property
     def esta_vencido(self):
@@ -155,6 +162,8 @@ class SolicitudSicret(models.Model):
     estado_enlace = models.CharField(max_length=20, choices=ESTADOS_ENLACE)
     descripcion_falla = models.CharField(max_length=40, choices=TIPOS_FALLA)
     detalle_adicional = models.TextField(blank=True)
+    ticket_sicret = models.CharField(max_length=80, blank=True)
+    comentario_encargado = models.TextField(blank=True)
     estado_sicret = models.CharField(
         max_length=24,
         choices=ESTADOS_SICRET,
@@ -182,3 +191,58 @@ class SolicitudSicret(models.Model):
 
     def __str__(self):
         return f"SICRET {self.ticket_netcracker} - RBD {self.rbd}"
+
+    @property
+    def escalamiento_texto(self):
+        headers = [
+            "TK NETCRACKER",
+            "RBD",
+            "ZONA",
+            "COMUNA",
+            "NOMBRE DE ESCUELA",
+            "DIRECCION",
+            "IP DE SERVICIO",
+            "INSTANCIA",
+            "NOMBRE CONTACTO",
+            "TELEFONO",
+            "CORREO",
+            "DESCRIPCION FALLA",
+        ]
+        values = [
+            self.ticket_netcracker,
+            self.rbd,
+            self.zona,
+            self.comuna,
+            self.nombre_escuela,
+            self.direccion,
+            self.ip_servicio,
+            self.instancia,
+            self.nombre_contacto,
+            self.telefono,
+            self.correo,
+            self.get_descripcion_falla_display(),
+        ]
+        return "\t".join(headers) + "\n" + "\t".join(str(value or "") for value in values)
+
+
+class EnlaceOperativo(models.Model):
+    titulo = models.CharField(max_length=120)
+    categoria = models.CharField(max_length=80, blank=True)
+    descripcion = models.CharField(max_length=240, blank=True)
+    url = models.URLField(max_length=500)
+    activo = models.BooleanField(default=True)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="enlaces_operativos_creados",
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("categoria", "titulo")
+        verbose_name = "enlace operativo"
+        verbose_name_plural = "enlaces operativos"
+
+    def __str__(self):
+        return self.titulo

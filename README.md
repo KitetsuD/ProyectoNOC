@@ -39,7 +39,9 @@ docker compose exec web python manage.py cargar_procedimientos_base
 
 Los usuarios ADMIN pueden descargar y subir el Excel maestro desde `Carga de datos`. El archivo concentra servicios RBD, contactos y catalogo de jornada en una sola plantilla para poblar o actualizar ambientes productivos.
 
-Los tutoriales operativos base se cargan con `cargar_procedimientos_base`; el comando crea o actualiza las guias paso a paso y enlaza sus PDF desde archivos estaticos del proyecto.
+Los tutoriales operativos se cargan desde `ADMIN > Tutoriales Admin`. Ese apartado permite importar automaticamente el documento base `.docx`, crear tutoriales visibles para operadores, asociar un documento completo y publicar u ocultar cada registro.
+
+El respaldo inicial de los tutoriales actuales queda en `docs/ProyectoNOC_Tutoriales_Operativos_Base.docx`; la pantalla `Tutoriales Admin` tambien permite descargarlo como documento base.
 
 ## Configuracion
 

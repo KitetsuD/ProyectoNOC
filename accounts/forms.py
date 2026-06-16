@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from .models import Procedimiento, SolicitudSicret
+from .models import EnlaceOperativo, Procedimiento, SolicitudSicret
 
 
 class AdminCargaDatosForm(forms.Form):
@@ -111,6 +111,7 @@ class ProcedimientoForm(forms.ModelForm):
             "responsable",
             "resultado",
             "enlace",
+            "archivo",
             "orden",
             "activo",
         )
@@ -124,7 +125,8 @@ class ProcedimientoForm(forms.ModelForm):
             "prioridad": "Prioridad",
             "responsable": "Responsable",
             "resultado": "Resultado / cierre",
-            "enlace": "Documento de apoyo",
+            "enlace": "Documento de apoyo externo",
+            "archivo": "Cargar documento",
             "orden": "Orden visual",
             "activo": "Visible para operadores",
         }
@@ -139,6 +141,7 @@ class ProcedimientoForm(forms.ModelForm):
             "responsable": forms.Select(attrs={"class": "admin-control"}),
             "resultado": forms.Textarea(attrs={"class": "admin-control", "rows": 3}),
             "enlace": forms.URLInput(attrs={"class": "admin-control", "autocomplete": "off"}),
+            "archivo": forms.ClearableFileInput(attrs={"class": "admin-control"}),
             "orden": forms.NumberInput(attrs={"class": "admin-control", "min": 0}),
             "activo": forms.CheckboxInput(attrs={"class": "admin-check"}),
         }
@@ -155,11 +158,102 @@ class ProcedimientoForm(forms.ModelForm):
             self.fields["responsable"].initial = user
             self.fields["activo"].initial = True
 
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get("archivo")
+        if not archivo:
+            return archivo
+        extension = Path(archivo.name).suffix.lower()
+        permitidas = {".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx"}
+        if extension not in permitidas:
+            raise forms.ValidationError("Formato no permitido. Usa PDF, Word, PowerPoint o Excel.")
+        return archivo
+
     def clean_fecha_compromiso(self):
         fecha = self.cleaned_data.get("fecha_compromiso")
         if fecha and fecha < timezone.localdate():
             raise forms.ValidationError("La fecha compromiso no puede ser anterior a hoy.")
         return fecha
+
+
+class AdminTutorialForm(forms.ModelForm):
+    class Meta:
+        model = Procedimiento
+        fields = (
+            "titulo",
+            "categoria",
+            "descripcion",
+            "contenido",
+            "enlace",
+            "archivo",
+            "orden",
+            "activo",
+        )
+        labels = {
+            "titulo": "Nombre del tutorial",
+            "categoria": "Caso / categoria",
+            "descripcion": "Cuando usarlo",
+            "contenido": "Pasos del tutorial",
+            "enlace": "Documento de apoyo externo",
+            "archivo": "Cargar documento",
+            "orden": "Orden visual",
+            "activo": "Visible para operadores",
+        }
+        widgets = {
+            "titulo": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
+            "categoria": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
+            "descripcion": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
+            "contenido": forms.Textarea(attrs={"class": "admin-control", "rows": 7}),
+            "enlace": forms.URLInput(attrs={"class": "admin-control", "autocomplete": "off"}),
+            "archivo": forms.ClearableFileInput(attrs={"class": "admin-control"}),
+            "orden": forms.NumberInput(attrs={"class": "admin-control", "min": 0}),
+            "activo": forms.CheckboxInput(attrs={"class": "admin-check"}),
+        }
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get("archivo")
+        if not archivo:
+            return archivo
+        extension = Path(archivo.name).suffix.lower()
+        permitidas = {".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx"}
+        if extension not in permitidas:
+            raise forms.ValidationError("Formato no permitido. Usa PDF, Word, PowerPoint o Excel.")
+        return archivo
+
+
+class AdminTutorialDocumentoForm(forms.Form):
+    archivo = forms.FileField(
+        label="Documento base de tutoriales",
+        widget=forms.ClearableFileInput(attrs={"class": "admin-file-input", "accept": ".docx"}),
+    )
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get("archivo")
+        if not archivo:
+            return archivo
+        extension = Path(archivo.name).suffix.lower()
+        if extension != ".docx":
+            raise forms.ValidationError("Formato no permitido. Usa el documento base en formato .docx.")
+        return archivo
+
+
+class EnlaceOperativoForm(forms.ModelForm):
+    class Meta:
+        model = EnlaceOperativo
+        fields = ("titulo", "categoria", "descripcion", "url", "activo")
+        labels = {
+            "titulo": "Nombre",
+            "categoria": "Categoria",
+            "descripcion": "Descripcion",
+            "url": "URL",
+            "activo": "Visible para operadores",
+        }
+        widgets = {
+            "titulo": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
+            "categoria": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off", "placeholder": "Ej: Plataformas"}),
+            "descripcion": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
+            "url": forms.URLInput(attrs={"class": "admin-control", "autocomplete": "off", "placeholder": "https://"}),
+            "activo": forms.CheckboxInput(attrs={"class": "admin-check"}),
+        }
 
 
 class SicretSolicitudForm(forms.ModelForm):
