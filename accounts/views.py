@@ -216,6 +216,41 @@ def admin_tutoriales(request):
 
 
 @_admin_required
+def admin_tutorial_editar(request, tutorial_id):
+    tutorial = get_object_or_404(
+        Procedimiento,
+        pk=tutorial_id,
+        tipo=Procedimiento.TIPO_PROCEDIMIENTO,
+    )
+    if request.method == "POST":
+        form = AdminTutorialForm(request.POST, request.FILES, instance=tutorial)
+        if form.is_valid():
+            tutorial = form.save(commit=False)
+            tutorial.tipo = Procedimiento.TIPO_PROCEDIMIENTO
+            tutorial.estado = Procedimiento.ESTADO_PENDIENTE
+            tutorial.prioridad = Procedimiento.PRIORIDAD_ALTA
+            tutorial.fecha_compromiso = None
+            tutorial.resultado = ""
+            tutorial.actualizado_por = request.user
+            if not tutorial.responsable_id:
+                tutorial.responsable = request.user
+            tutorial.save()
+            messages.success(request, "Tutorial actualizado correctamente.")
+            return redirect("admin_tutoriales")
+    else:
+        form = AdminTutorialForm(instance=tutorial)
+
+    return render(
+        request,
+        "accounts/admin_tutorial_form.html",
+        {
+            "form": form,
+            "tutorial": tutorial,
+        },
+    )
+
+
+@_admin_required
 def admin_tutoriales_documento_base(request):
     documento = Path(settings.BASE_DIR) / "docs" / "ProyectoNOC_Tutoriales_Operativos_Base.docx"
     if not documento.exists():

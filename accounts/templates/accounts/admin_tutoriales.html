@@ -168,12 +168,15 @@
                   </span>
                 </td>
                 <td>
-                  <form method="post" action="{% url 'procedimiento_toggle' tutorial.id %}">
-                    {% csrf_token %}
-                    <button class="noc-user-action{% if tutorial.activo %} is-warning{% else %} is-ok{% endif %}" type="submit">
-                      {% if tutorial.activo %}Ocultar{% else %}Publicar{% endif %}
-                    </button>
-                  </form>
+                  <div class="noc-user-actions">
+                    <a class="noc-user-action" href="{% url 'admin_tutorial_editar' tutorial.id %}">Editar</a>
+                    <form method="post" action="{% url 'procedimiento_toggle' tutorial.id %}">
+                      {% csrf_token %}
+                      <button class="noc-user-action{% if tutorial.activo %} is-warning{% else %} is-ok{% endif %}" type="submit">
+                        {% if tutorial.activo %}Ocultar{% else %}Publicar{% endif %}
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             {% empty %}

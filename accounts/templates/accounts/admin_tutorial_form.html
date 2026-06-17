@@ -1,0 +1,86 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Editar tutorial | ProyectoNOC{% endblock %}
+{% block encabezado %}Editar tutorial{% endblock %}
+{% block menu_admin_tutoriales %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="noc-admin-page noc-tutorial-admin-page">
+    <section class="noc-upload-hero">
+      <div>
+        <span>ADMIN</span>
+        <h2>{{ tutorial.titulo }}</h2>
+        <p>Actualiza la informacion visible para operadores y carga o reemplaza el documento de apoyo.</p>
+      </div>
+      <a class="ghost-button" href="{% url 'admin_tutoriales' %}">Volver</a>
+    </section>
+
+    <section class="noc-upload-layout noc-tutorial-manual-layout">
+      <article class="noc-upload-guide" aria-label="Edicion de tutorial">
+        <div class="noc-upload-guide-head">
+          <strong>Documento actual</strong>
+          <span>PDF / Word / Excel / PowerPoint</span>
+        </div>
+        <div class="noc-upload-steps">
+          <div>
+            <span>1</span>
+            {% if tutorial.archivo %}
+              <p>El tutorial ya tiene un archivo cargado. Puedes abrirlo o subir uno nuevo para reemplazarlo.</p>
+              <a class="noc-user-action" href="{% url 'procedimiento_archivo' tutorial.id %}" target="_blank" rel="noreferrer">Abrir archivo actual</a>
+            {% else %}
+              <p>Este tutorial no tiene archivo cargado. Usa el campo de documento para agregar el PDF.</p>
+            {% endif %}
+          </div>
+          <div>
+            <span>2</span>
+            <p>Si subes un nuevo archivo, quedara asociado al tutorial para que los operadores lo puedan abrir.</p>
+          </div>
+        </div>
+      </article>
+
+      <section class="noc-admin-panel">
+        <div class="noc-admin-panel-head">
+          <div>
+            <span>Editar tutorial</span>
+            <h2>Actualizar informacion</h2>
+          </div>
+        </div>
+
+        <form class="noc-admin-upload-form" method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="form-non-field-errors">
+              {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="noc-admin-form-grid">
+            {% for field in form %}
+              <div class="noc-admin-field{% if field.name == 'contenido' or field.name == 'descripcion' or field.name == 'enlace' or field.name == 'archivo' %} is-wide{% endif %}{% if field.field.widget.input_type == 'checkbox' %} is-check{% endif %}{% if field.errors %} has-error{% endif %}">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                  <label class="noc-admin-check-row" for="{{ field.id_for_label }}">
+                    {{ field }}
+                    <span>{{ field.label }}</span>
+                  </label>
+                {% else %}
+                  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                {% endif %}
+                {% for error in field.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="noc-admin-actions">
+            <a class="ghost-button" href="{% url 'admin_tutoriales' %}">Cancelar</a>
+            <button class="primary-button" type="submit">Guardar cambios</button>
+          </div>
+        </form>
+      </section>
+    </section>
+  </section>
+{% endblock %}
