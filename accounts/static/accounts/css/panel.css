@@ -7466,6 +7466,30 @@ textarea.sicret-control {
   font-weight: 800;
 }
 
+.rbd-only-shell .admin-sidebar {
+  gap: 22px;
+}
+
+.rbd-only-shell .admin-menu {
+  padding-top: 4px;
+}
+
+.rbd-only-shell .admin-submenu {
+  padding-top: 0;
+}
+
+.rbd-only-shell .admin-submenu a {
+  min-height: 52px;
+}
+
+.rbd-only-shell .admin-kicker {
+  color: #0f766e;
+}
+
+.rbd-only-shell .admin-usuario strong {
+  color: #0f766e;
+}
+
 @media (max-width: 1180px) {
   .links-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

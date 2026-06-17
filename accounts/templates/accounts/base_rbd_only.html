@@ -1,0 +1,184 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}RBD | ProyectoNOC{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-52">
+</head>
+<body>
+  <div class="admin-shell rbd-only-shell" id="adminShell">
+    <aside class="admin-sidebar" aria-label="Menu RBD">
+      <div class="admin-marca">
+        <span class="marca-cuadro">NOC</span>
+        <div>
+          <strong>ProyectoNOC</strong>
+          <span>Consulta RBD</span>
+        </div>
+      </div>
+
+      <nav class="admin-menu">
+        <div class="admin-submenu">
+          <a href="{% url 'rbd:buscar' %}" class="{% block menu_rbd %}activo{% endblock %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 5h18"></path>
+              <path d="M3 12h18"></path>
+              <path d="M3 19h18"></path>
+              <path d="M8 5v14"></path>
+              <path d="M16 5v14"></path>
+              <path d="M18 17l3 3"></path>
+            </svg>
+            <span>RBD</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <section class="admin-main">
+      <header class="admin-topbar">
+        <button class="admin-sidebar-boton" type="button" aria-label="Contraer menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16"></path>
+            <path d="M4 12h16"></path>
+            <path d="M4 18h16"></path>
+          </svg>
+        </button>
+        <div>
+          <span class="admin-kicker">Panel consulta</span>
+          <h1>{% block encabezado %}Consulta RBD{% endblock %}</h1>
+        </div>
+        <div class="admin-top-actions">
+          <div class="admin-usuario">
+            <span>{{ request.user.username }}</span>
+            <strong>Solo RBD</strong>
+          </div>
+          <form action="{% url 'logout' %}" method="post" class="admin-salida">
+            {% csrf_token %}
+            <button type="submit">Salir</button>
+          </form>
+        </div>
+      </header>
+
+      <main class="admin-contenido">
+        {% block contenido %}{% endblock %}
+      </main>
+    </section>
+  </div>
+
+  {% if messages %}
+    <div class="admin-toast-stack" aria-live="polite" aria-atomic="true">
+      {% for message in messages %}
+        <div class="admin-toast admin-toast-{{ message.tags }}" data-admin-toast role="status">
+          <div>
+            <strong>{% if message.tags == "success" %}Listo{% elif message.tags == "error" %}Atencion{% else %}Informacion{% endif %}</strong>
+            <span>{{ message }}</span>
+          </div>
+          <button type="button" data-admin-toast-close aria-label="Cerrar mensaje">x</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <script>
+    const adminShell = document.getElementById("adminShell");
+    const botonSidebar = document.querySelector(".admin-sidebar-boton");
+
+    if (botonSidebar && adminShell) {
+      botonSidebar.addEventListener("click", function () {
+        adminShell.classList.toggle("admin-sidebar-contraido");
+      });
+    }
+
+    function cerrarAdminToast(toast) {
+      if (!toast) return;
+      toast.classList.add("is-hiding");
+      window.setTimeout(function () {
+        toast.remove();
+      }, 240);
+    }
+
+    document.querySelectorAll("[data-admin-toast]").forEach(function (toast) {
+      const close = toast.querySelector("[data-admin-toast-close]");
+      if (close) {
+        close.addEventListener("click", function (event) {
+          event.preventDefault();
+          cerrarAdminToast(toast);
+        });
+      }
+      window.setTimeout(function () {
+        cerrarAdminToast(toast);
+      }, 3200);
+    });
+
+    function copiarTextoPanel(texto) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(texto);
+      }
+
+      const campoTemporal = document.createElement("textarea");
+      campoTemporal.value = texto;
+      campoTemporal.setAttribute("readonly", "");
+      campoTemporal.style.position = "fixed";
+      campoTemporal.style.left = "-9999px";
+      document.body.appendChild(campoTemporal);
+      campoTemporal.select();
+      document.execCommand("copy");
+      document.body.removeChild(campoTemporal);
+      return Promise.resolve();
+    }
+
+    let copiaTimer;
+
+    function mostrarAvisoCopia(mensaje) {
+      let aviso = document.querySelector(".rbd-copy-toast");
+      if (!aviso) {
+        aviso = document.createElement("div");
+        aviso.className = "rbd-copy-toast";
+        aviso.setAttribute("role", "status");
+        aviso.setAttribute("aria-live", "polite");
+        document.body.appendChild(aviso);
+      }
+      aviso.textContent = mensaje;
+      aviso.classList.add("visible");
+      window.clearTimeout(copiaTimer);
+      copiaTimer = window.setTimeout(function () {
+        aviso.classList.remove("visible");
+      }, 1400);
+    }
+
+    document.addEventListener("click", function (event) {
+      const boton = event.target.closest("[data-copy-value], [data-copy-source]");
+      if (!boton) {
+        return;
+      }
+
+      const origen = boton.getAttribute("data-copy-source");
+      let valor = boton.getAttribute("data-copy-value") || "";
+      if (origen) {
+        const elementoOrigen = document.getElementById(origen);
+        if (elementoOrigen) {
+          valor = elementoOrigen.value || elementoOrigen.textContent || "";
+        }
+      }
+
+      copiarTextoPanel(valor).then(function () {
+        const etiquetaOriginal = boton.getAttribute("aria-label") || "Copiar";
+        const tituloOriginal = boton.getAttribute("title") || "Copiar";
+        boton.setAttribute("aria-label", "Copiado");
+        boton.setAttribute("title", "Copiado");
+        boton.classList.add("copied");
+        mostrarAvisoCopia("Copiado al portapapeles");
+        window.setTimeout(function () {
+          boton.classList.remove("copied");
+          boton.setAttribute("aria-label", etiquetaOriginal);
+          boton.setAttribute("title", tituloOriginal);
+        }, 1200);
+      }).catch(function () {
+        mostrarAvisoCopia("No se pudo copiar");
+      });
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

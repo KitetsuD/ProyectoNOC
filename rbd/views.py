@@ -6,6 +6,8 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from accounts.permissions import es_solo_rbd
+
 from .forms import RbdSearchForm
 from .models import RbdContacto, RbdServicio
 
@@ -263,6 +265,7 @@ def buscar_rbd(request):
             detail = _build_detail(resultado)
 
     context = {
+        "base_template": "accounts/base_rbd_only.html" if es_solo_rbd(request.user) else "accounts/base_panel.html",
         "form": form,
         "resultado": resultado,
         "busqueda_realizada": bool(raw_rbd),
