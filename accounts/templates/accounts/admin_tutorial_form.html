@@ -1,7 +1,7 @@
 {% extends "accounts/base_panel.html" %}
 
-{% block titulo %}Editar tutorial | ProyectoNOC{% endblock %}
-{% block encabezado %}Editar tutorial{% endblock %}
+{% block titulo %}Editar procedimiento | ProyectoNOC{% endblock %}
+{% block encabezado %}Editar procedimiento{% endblock %}
 {% block menu_admin_tutoriales %}activo{% endblock %}
 
 {% block contenido %}
@@ -16,7 +16,7 @@
     </section>
 
     <section class="noc-upload-layout noc-tutorial-manual-layout">
-      <article class="noc-upload-guide" aria-label="Edicion de tutorial">
+      <article class="noc-upload-guide" aria-label="Edicion de procedimiento">
         <div class="noc-upload-guide-head">
           <strong>Documento actual</strong>
           <span>PDF / Word / Excel / PowerPoint</span>
@@ -25,15 +25,15 @@
           <div>
             <span>1</span>
             {% if tutorial.archivo %}
-              <p>El tutorial ya tiene un archivo cargado. Puedes abrirlo o subir uno nuevo para reemplazarlo.</p>
+              <p>El procedimiento ya tiene un archivo cargado. Puedes abrirlo o subir uno nuevo para reemplazarlo.</p>
               <a class="noc-user-action" href="{% url 'procedimiento_archivo' tutorial.id %}" target="_blank" rel="noreferrer">Abrir archivo actual</a>
             {% else %}
-              <p>Este tutorial no tiene archivo cargado. Usa el campo de documento para agregar el PDF.</p>
+              <p>Este procedimiento no tiene archivo cargado. Usa el campo de documento para agregar el PDF.</p>
             {% endif %}
           </div>
           <div>
             <span>2</span>
-            <p>Si subes un nuevo archivo, quedara asociado al tutorial para que los operadores lo puedan abrir.</p>
+            <p>Si subes un nuevo archivo, quedara asociado al procedimiento para que los operadores lo puedan abrir.</p>
           </div>
         </div>
       </article>
@@ -41,7 +41,7 @@
       <section class="noc-admin-panel">
         <div class="noc-admin-panel-head">
           <div>
-            <span>Editar tutorial</span>
+            <span>Editar procedimiento</span>
             <h2>Actualizar informacion</h2>
           </div>
         </div>

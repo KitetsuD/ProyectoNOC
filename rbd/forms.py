@@ -19,22 +19,19 @@ class RbdSearchForm(forms.Form):
 
 class AdminRbdSearchForm(forms.Form):
     q = forms.CharField(
-        label="Buscar por RBD",
+        label="Buscar por RBD o BPI",
         required=False,
         widget=forms.TextInput(
             attrs={
                 "class": "admin-control",
-                "placeholder": "Ej: 4190",
+                "placeholder": "Ej: 4190 o Internet EES",
                 "autocomplete": "off",
-                "inputmode": "numeric",
             }
         ),
     )
 
     def clean_q(self):
         value = (self.cleaned_data.get("q") or "").strip()
-        if value and not value.isdigit():
-            raise forms.ValidationError("Ingresa solo numeros de RBD.")
         return value
 
 
@@ -43,6 +40,9 @@ class AdminRbdServicioForm(forms.ModelForm):
         model = RbdServicio
         fields = (
             "rbd",
+            "bpi",
+            "codigo_servicio_oss",
+            "ip",
             "nombre_establecimiento",
             "direccion",
             "localidad",
@@ -52,10 +52,8 @@ class AdminRbdServicioForm(forms.ModelForm):
             "matricula",
             "lat",
             "long",
-            "bpi",
             "tecnologia",
             "tipo",
-            "ip",
             "vlan",
             "puerta",
             "nodo",
@@ -63,7 +61,6 @@ class AdminRbdServicioForm(forms.ModelForm):
             "bw_nacional",
             "bw_internacional",
             "bw",
-            "codigo_servicio_oss",
             "codigo_servicio_ncc",
             "jornada_categoria",
             "jornada_horario",
@@ -81,9 +78,10 @@ class AdminRbdServicioForm(forms.ModelForm):
             "lat": "Latitud",
             "long": "Longitud",
             "bpi": "BPI",
+            "codigo_servicio_oss": "EF",
+            "ip": "IP",
             "tecnologia": "Tecnologia actual",
             "tipo": "Tipo tecnologia",
-            "ip": "IP",
             "vlan": "VLAN",
             "puerta": "Puerta",
             "nodo": "Nodo",
@@ -91,7 +89,6 @@ class AdminRbdServicioForm(forms.ModelForm):
             "bw_nacional": "BW nacional",
             "bw_internacional": "BW internacional",
             "bw": "BW bajada",
-            "codigo_servicio_oss": "Codigo OSS",
             "codigo_servicio_ncc": "Codigo NCC",
             "jornada_categoria": "Categoria jornada",
             "jornada_horario": "Horario jornada",

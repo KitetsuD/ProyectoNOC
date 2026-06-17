@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}ProyectoNOC{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-46">
+  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-51">
 </head>
 <body>
   <div class="admin-shell" id="adminShell">
@@ -38,6 +38,7 @@
             </svg>
             <span>RBD</span>
           </a>
+          {% if not usuario_solo_rbd %}
           <a href="{% url 'bitacora:crear' %}" class="{% block menu_bitacora %}{% endblock %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M8 3v4"></path>
@@ -67,7 +68,7 @@
               <path d="M8 12h8"></path>
               <path d="M8 16h5"></path>
             </svg>
-            <span>Tutoriales</span>
+            <span>Procedimientos</span>
           </a>
           <a href="{% url 'enlaces_operativos' %}" class="{% block menu_enlaces %}{% endblock %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -94,6 +95,27 @@
             </svg>
             <span>Tickets SICRET</span>
           </a>
+          <a href="{% url 'sagec' %}" class="{% block menu_sagec %}{% endblock %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 4h14v16H5Z"></path>
+              <path d="M8 8h8"></path>
+              <path d="M8 12h8"></path>
+              <path d="M8 16h4"></path>
+              <path d="M16 16h2"></path>
+            </svg>
+            <span>SAGEC</span>
+          </a>
+          <a href="{% url 'sagec_tickets' %}" class="{% block menu_sagec_tickets %}{% endblock %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16"></path>
+              <path d="M4 12h16"></path>
+              <path d="M4 18h16"></path>
+              <path d="M7 6v12"></path>
+              <path d="M17 6v12"></path>
+            </svg>
+            <span>Tickets SAGEC</span>
+          </a>
+          {% endif %}
           {% if request.user.is_staff %}
             <span class="admin-menu-section-label">ADMIN</span>
             <a href="{% url 'admin_carga_datos' %}" class="{% block menu_admin_carga %}{% endblock %}">
@@ -105,6 +127,16 @@
               </svg>
               <span>Carga de datos</span>
             </a>
+            <a href="{% url 'admin_historial_operativo' %}" class="{% block menu_admin_historial %}{% endblock %}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 5h16v14H4Z"></path>
+                <path d="M8 9h8"></path>
+                <path d="M8 13h5"></path>
+                <path d="M17 17l3 3"></path>
+                <path d="M20 17l-3 3"></path>
+              </svg>
+              <span>Historial cerrado</span>
+            </a>
             <a href="{% url 'admin_tutoriales' %}" class="{% block menu_admin_tutoriales %}{% endblock %}">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4 4h16v16H4Z"></path>
@@ -112,7 +144,7 @@
                 <path d="M8 12h8"></path>
                 <path d="M8 16h5"></path>
               </svg>
-              <span>Tutoriales Admin</span>
+              <span>Procedimientos Admin</span>
             </a>
             <a href="{% url 'admin_rbd' %}" class="{% block menu_admin_rbd %}{% endblock %}">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -154,7 +186,7 @@
         <div class="admin-top-actions">
           <div class="admin-usuario">
             <span>{{ request.user.username }}</span>
-            <strong>{% if request.user.is_staff %}NOC Admin{% else %}Operador{% endif %}</strong>
+            <strong>{% if request.user.is_staff %}NOC Admin{% else %}{{ usuario_perfil_label|default:"Operador" }}{% endif %}</strong>
           </div>
           <form action="{% url 'logout' %}" method="post" class="admin-salida">
             {% csrf_token %}

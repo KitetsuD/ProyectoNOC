@@ -6,12 +6,19 @@ from django.utils import timezone
 from bitacora.models import RegistroBitacora
 
 from .models import Procedimiento
+from .permissions import es_solo_rbd, etiqueta_perfil_usuario, perfil_usuario
 
 
 def notificaciones_operativas(request):
     user = getattr(request, "user", None)
     if not user or not user.is_authenticated:
-        return {"notificaciones_pendientes": 0, "notificaciones_resumen": []}
+        return {
+            "notificaciones_pendientes": 0,
+            "notificaciones_resumen": [],
+            "usuario_solo_rbd": False,
+            "usuario_perfil": "",
+            "usuario_perfil_label": "",
+        }
 
     hoy = timezone.localdate()
     procedimientos = Procedimiento.objects.filter(
@@ -23,6 +30,7 @@ def notificaciones_operativas(request):
         procedimientos = procedimientos.filter(tipo=getattr(Procedimiento, "TIPO_GESTION", "gestion"))
     agendas = RegistroBitacora.objects.filter(
         estado=RegistroBitacora.ESTADO_AGENDADA,
+        llamada_realizada=False,
         dia__gte=hoy,
         dia__lte=hoy + timedelta(days=1),
     )
@@ -39,4 +47,7 @@ def notificaciones_operativas(request):
             ("Gestiones", procedimientos_count),
             ("Agendas 24h", agendas_count),
         ],
+        "usuario_solo_rbd": es_solo_rbd(user),
+        "usuario_perfil": perfil_usuario(user),
+        "usuario_perfil_label": etiqueta_perfil_usuario(user),
     }

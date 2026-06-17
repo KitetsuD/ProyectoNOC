@@ -1,7 +1,7 @@
 {% extends "accounts/base_panel.html" %}
 
-{% block titulo %}Tutoriales Admin | ProyectoNOC{% endblock %}
-{% block encabezado %}Tutoriales Admin{% endblock %}
+{% block titulo %}Procedimientos Admin | ProyectoNOC{% endblock %}
+{% block encabezado %}Procedimientos Admin{% endblock %}
 {% block menu_admin_tutoriales %}activo{% endblock %}
 
 {% block contenido %}
@@ -9,13 +9,13 @@
     <section class="noc-upload-hero">
       <div>
         <span>ADMIN</span>
-        <h2>Carga de tutoriales operativos</h2>
-        <p>Administra los tutoriales que ven los operadores y carga documentos de apoyo cuando cambie un protocolo.</p>
+        <h2>Carga de procedimientos operativos</h2>
+        <p>Administra los procedimientos que ven los operadores y carga documentos de apoyo cuando cambie un protocolo.</p>
       </div>
     </section>
 
     <section class="noc-upload-layout">
-      <article class="noc-upload-guide" aria-label="Uso de la carga de tutoriales">
+      <article class="noc-upload-guide" aria-label="Uso de la carga de procedimientos">
         <div class="noc-upload-guide-head">
           <strong>Solo perfil ADMIN</strong>
           <span>PDF / Word / Excel / PowerPoint</span>
@@ -31,7 +31,7 @@
           </div>
           <div>
             <span>3</span>
-            <p>Publica u oculta el tutorial sin borrarlo del historial.</p>
+            <p>Publica u oculta el procedimiento sin borrarlo del historial.</p>
           </div>
         </div>
       </article>
@@ -57,14 +57,14 @@
             </div>
           </div>
           <div class="noc-admin-actions">
-            <button class="primary-button" type="submit">Importar tutoriales</button>
+            <button class="primary-button" type="submit">Importar procedimientos</button>
           </div>
         </form>
       </section>
     </section>
 
     <section class="noc-upload-layout noc-tutorial-manual-layout">
-      <article class="noc-upload-guide" aria-label="Carga manual de tutoriales">
+      <article class="noc-upload-guide" aria-label="Carga manual de procedimientos">
         <div class="noc-upload-guide-head">
           <strong>Carga manual</strong>
           <span>Registro individual</span>
@@ -84,7 +84,7 @@
       <section class="noc-admin-panel">
         <div class="noc-admin-panel-head">
           <div>
-            <span>Nuevo tutorial</span>
+            <span>Nuevo procedimiento</span>
             <h2>Cargar informacion manual</h2>
           </div>
         </div>
@@ -119,7 +119,7 @@
           </div>
 
           <div class="noc-admin-actions">
-            <button class="primary-button" type="submit">Guardar tutorial</button>
+            <button class="primary-button" type="submit">Guardar procedimiento</button>
           </div>
         </form>
       </section>
@@ -129,7 +129,7 @@
       <div class="noc-admin-panel-head">
         <div>
           <span>Publicacion</span>
-          <h2>Tutoriales cargados</h2>
+          <h2>Procedimientos cargados</h2>
         </div>
       </div>
 
@@ -138,7 +138,7 @@
           <thead>
             <tr>
               <th>Orden</th>
-              <th>Tutorial</th>
+              <th>Procedimiento</th>
               <th>Documento</th>
               <th>Estado</th>
               <th>Acciones</th>
@@ -182,7 +182,7 @@
             {% empty %}
               <tr>
                 <td colspan="5">
-                  <div class="noc-users-empty">Sin tutoriales cargados.</div>
+                  <div class="noc-users-empty">Sin procedimientos cargados.</div>
                 </td>
               </tr>
             {% endfor %}

@@ -1,7 +1,7 @@
 {% extends "accounts/base_panel.html" %}
 
-{% block titulo %}Tutoriales operativos | ProyectoNOC{% endblock %}
-{% block encabezado %}Tutoriales operativos{% endblock %}
+{% block titulo %}Procedimientos operativos | ProyectoNOC{% endblock %}
+{% block encabezado %}Procedimientos operativos{% endblock %}
 {% block menu_procedimientos %}activo{% endblock %}
 
 {% block contenido %}
@@ -9,12 +9,12 @@
     <section class="ops-hero ops-hero-tutorial">
       <div>
         <span>Guias de accion</span>
-        <h2>Tutoriales operativos</h2>
+        <h2>Procedimientos operativos</h2>
         <p>Guia paso a paso para saber que hacer cuando aparece un caso de proveedor, monitoreo, contingencia o escalamiento.</p>
       </div>
       <div class="ops-hero-metrics">
         <article>
-          <span>Tutoriales</span>
+          <span>Procedimientos</span>
           <strong>{{ documentos|length }}</strong>
         </article>
         <article>
@@ -28,14 +28,14 @@
       <aside class="ops-tutorial-index">
         <span>Indice rapido</span>
         <h2>Casos disponibles</h2>
-        <nav aria-label="Indice de tutoriales">
+        <nav aria-label="Indice de procedimientos">
           {% for documento in documentos %}
             <a href="#tutorial-{{ documento.id }}">
-              <small>{{ documento.categoria|default:"Tutorial" }}</small>
+              <small>{{ documento.categoria|default:"Procedimiento" }}</small>
               <strong>{{ documento.titulo }}</strong>
             </a>
           {% empty %}
-            <p>Sin tutoriales publicados.</p>
+            <p>Sin procedimientos publicados.</p>
           {% endfor %}
         </nav>
       </aside>
@@ -45,7 +45,7 @@
           <article id="tutorial-{{ documento.id }}" class="ops-tutorial-card{% if not documento.activo %} is-hidden-procedure{% endif %}">
             <header class="ops-tutorial-card-head">
               <div>
-                <span>{{ documento.categoria|default:"Tutorial" }}</span>
+                <span>{{ documento.categoria|default:"Procedimiento" }}</span>
                 <h2>{{ documento.titulo }}</h2>
               </div>
               <strong>0{{ forloop.counter }}</strong>
@@ -98,7 +98,7 @@
           </article>
         {% empty %}
           <article class="ops-card">
-            <p class="ops-empty">Sin tutoriales publicados.</p>
+            <p class="ops-empty">Sin procedimientos publicados.</p>
           </article>
         {% endfor %}
       </div>

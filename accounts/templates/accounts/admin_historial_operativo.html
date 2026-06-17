@@ -1,0 +1,229 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}Historial cerrado | ProyectoNOC{% endblock %}
+{% block encabezado %}Historial cerrado{% endblock %}
+{% block menu_admin_historial %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="noc-admin-page">
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>ADMIN</span>
+          <h2>Tickets cerrados y llamadas realizadas</h2>
+        </div>
+      </div>
+      <form class="sicret-ticket-filters" method="get">
+        <label>
+          <span>Buscar</span>
+          <input class="sicret-control" type="search" name="q" value="{{ query }}" placeholder="Ticket, SICRET, SAGEC, RBD, escuela, IP o usuario">
+        </label>
+        <div class="sicret-filter-actions">
+          <button class="primary-button" type="submit">Filtrar</button>
+          <a class="ghost-button" href="{% url 'admin_historial_operativo' %}">Limpiar</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="noc-admin-data-grid">
+      <article class="noc-admin-data-card">
+        <strong>{{ total_sicret }}</strong>
+        <span>Tickets SICRET cerrados</span>
+        <small>Historico</small>
+      </article>
+      <article class="noc-admin-data-card">
+        <strong>{{ total_llamadas }}</strong>
+        <span>Llamadas realizadas</span>
+        <small>Bitacora</small>
+      </article>
+      <article class="noc-admin-data-card">
+        <strong>{{ total_sagec }}</strong>
+        <span>Tickets SAGEC cerrados</span>
+        <small>Historico</small>
+      </article>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>SICRET</span>
+          <h2>Tickets cerrados</h2>
+        </div>
+      </div>
+      <div class="noc-admin-table-wrap">
+        <table class="noc-admin-table">
+          <thead>
+            <tr>
+              <th>Ticket</th>
+              <th>Ticket SICRET</th>
+              <th>RBD / escuela</th>
+              <th>Servicio</th>
+              <th>Estado</th>
+              <th>Comentario</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for solicitud in sicret_cerrados %}
+              <tr>
+                <td>
+                  <strong>{{ solicitud.ticket_netcracker }}</strong>
+                  <small>{{ solicitud.creado_en|date:"d/m/Y H:i" }} - {{ solicitud.creado_por.username }}</small>
+                </td>
+                <td>{{ solicitud.ticket_sicret|default:"Sin folio" }}</td>
+                <td>
+                  <strong>RBD {{ solicitud.rbd }}</strong>
+                  <small>{{ solicitud.nombre_escuela }}</small>
+                  <small>{{ solicitud.comuna }}</small>
+                </td>
+                <td>
+                  <strong>{{ solicitud.ip_servicio }}</strong>
+                  <small>{{ solicitud.instancia }}</small>
+                </td>
+                <td>
+                  <span class="sicret-workflow-status sicret-workflow-status-{{ solicitud.estado_sicret }}">
+                    {{ solicitud.get_estado_sicret_display }}
+                  </span>
+                  {% if solicitud.estado_sicret_actualizado_por %}
+                    <small>{{ solicitud.estado_sicret_actualizado_en|date:"d/m/Y H:i" }} - {{ solicitud.estado_sicret_actualizado_por.username }}</small>
+                  {% endif %}
+                </td>
+                <td>{{ solicitud.comentario_encargado|default:"Sin comentario"|linebreaksbr }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6">
+                  <div class="sicret-empty-state">
+                    <strong>Sin tickets cerrados</strong>
+                    <span>No hay registros SICRET cerrados para los filtros actuales.</span>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>SAGEC</span>
+          <h2>Tickets cerrados</h2>
+        </div>
+      </div>
+      <div class="noc-admin-table-wrap">
+        <table class="noc-admin-table">
+          <thead>
+            <tr>
+              <th>Ticket</th>
+              <th>Ticket SAGEC</th>
+              <th>RBD</th>
+              <th>Motivo</th>
+              <th>Estado</th>
+              <th>Comentario</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for solicitud in sagec_cerrados %}
+              <tr>
+                <td>
+                  <strong>{{ solicitud.numero_ticket }}</strong>
+                  <small>Caida: {{ solicitud.fecha_caida|date:"d/m/Y" }}</small>
+                  <small>{{ solicitud.creado_en|date:"d/m/Y H:i" }} - {{ solicitud.creado_por.username }}</small>
+                </td>
+                <td>{{ solicitud.ticket_sagec|default:"Sin folio" }}</td>
+                <td>
+                  <strong>RBD {{ solicitud.rbd }}</strong>
+                  <small>ID falla {{ solicitud.id_falla_asociada|default:"Sin ID" }}</small>
+                </td>
+                <td>
+                  <strong>{{ solicitud.get_motivo_ingreso_display }}</strong>
+                  <small>{{ solicitud.get_motivo_falla_terceros_display }}</small>
+                </td>
+                <td>
+                  <span class="sicret-workflow-status sicret-workflow-status-{{ solicitud.estado_sagec }}">
+                    {{ solicitud.get_estado_sagec_display }}
+                  </span>
+                  {% if solicitud.estado_sagec_actualizado_por %}
+                    <small>{{ solicitud.estado_sagec_actualizado_en|date:"d/m/Y H:i" }} - {{ solicitud.estado_sagec_actualizado_por.username }}</small>
+                  {% endif %}
+                </td>
+                <td>{{ solicitud.comentario_encargado|default:"Sin comentario"|linebreaksbr }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6">
+                  <div class="sicret-empty-state">
+                    <strong>Sin tickets SAGEC cerrados</strong>
+                    <span>No hay registros SAGEC cerrados para los filtros actuales.</span>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>BITACORA</span>
+          <h2>Llamadas realizadas</h2>
+        </div>
+      </div>
+      <div class="noc-admin-table-wrap">
+        <table class="noc-admin-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Ticket</th>
+              <th>RBD</th>
+              <th>Usuario</th>
+              <th>Tipo</th>
+              <th>Actualizacion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for registro in llamadas_realizadas %}
+              <tr>
+                <td>
+                  <strong>{{ registro.dia|date:"d/m/Y" }}</strong>
+                  <small>{{ registro.hora|time:"H:i" }}</small>
+                </td>
+                <td>
+                  <strong>{{ registro.ticket }}</strong>
+                  <a href="{{ registro.vinculo_ticket }}" target="_blank" rel="noreferrer">Abrir ticket</a>
+                </td>
+                <td>RBD {{ registro.rbd }}</td>
+                <td>{{ registro.usuario.username }}</td>
+                <td>
+                  {% if registro.es_fin_de_semana %}
+                    <span class="calendar-agenda-pill is-weekend">Fin de semana</span>
+                  {% else %}
+                    <span class="calendar-agenda-pill">Regular</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="call-state-pill is-done">Realizada</span>
+                  {% if registro.llamada_actualizada_en %}
+                    <small>{{ registro.llamada_actualizada_en|date:"d/m/Y H:i" }}</small>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6">
+                  <div class="sicret-empty-state">
+                    <strong>Sin llamadas realizadas</strong>
+                    <span>No hay registros de Bitacora realizados para los filtros actuales.</span>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+{% endblock %}

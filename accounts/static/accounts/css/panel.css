@@ -3500,7 +3500,7 @@ a {
 }
 
 .rbd-contact-category .rbd-contact-grid.editable {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   padding: 9px;
 }
@@ -3560,7 +3560,7 @@ a {
   .rbd-compact-top-grid .rbd-info-grid.atomized,
   .rbd-compact-top-grid .rbd-info-grid.service,
   .rbd-contact-category .rbd-contact-grid.editable {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -4981,6 +4981,11 @@ a {
   align-content: center;
 }
 
+.noc-admin-field.is-key-rbd-field {
+  border-color: #99f6e4;
+  background: linear-gradient(135deg, #ecfdf8 0%, #f8fbff 100%);
+}
+
 .noc-admin-check-row {
   display: inline-flex;
   align-items: center;
@@ -5257,6 +5262,11 @@ a {
 .noc-admin-badge.is-active {
   background: #dcfce7;
   color: #166534;
+}
+
+.noc-admin-badge.is-rbd {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .noc-admin-badge.is-inactive {
@@ -6696,7 +6706,7 @@ textarea.sicret-control {
 
 .sicret-status-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 
@@ -6962,6 +6972,21 @@ textarea.sicret-control {
   color: #0369a1;
   font-size: 12px;
   font-weight: 900;
+}
+
+.sicret-workflow-status-preparacion {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.sicret-workflow-status-ingresado {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.sicret-workflow-status-revision {
+  background: #fef3c7;
+  color: #b45309;
 }
 
 .sicret-workflow-status-enviado_terreno {

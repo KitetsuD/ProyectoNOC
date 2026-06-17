@@ -204,7 +204,7 @@ class SolicitudSicret(models.Model):
             "IP DE SERVICIO",
             "INSTANCIA",
             "NOMBRE CONTACTO",
-            "TELEFONO",
+            "N°TELEFONO",
             "CORREO",
             "DESCRIPCION FALLA",
         ]
@@ -223,6 +223,75 @@ class SolicitudSicret(models.Model):
             self.get_descripcion_falla_display(),
         ]
         return "\t".join(headers) + "\n" + "\t".join(str(value or "") for value in values)
+
+
+class SolicitudSagec(models.Model):
+    ESTADO_SAGEC_PREPARACION = "preparacion"
+    ESTADO_SAGEC_INGRESADO = "ingresado"
+    ESTADO_SAGEC_REVISION = "revision"
+    ESTADO_SAGEC_CERRADO = "cerrado"
+    ESTADOS_SAGEC = (
+        (ESTADO_SAGEC_PREPARACION, "En preparacion"),
+        (ESTADO_SAGEC_INGRESADO, "Ingresado a SAGEC"),
+        (ESTADO_SAGEC_REVISION, "En revision"),
+        (ESTADO_SAGEC_CERRADO, "Cerrado"),
+    )
+
+    MOTIVO_FALLA_MASIVA = "falla_masiva"
+    MOTIVO_RESPONSABILIDAD_TERCEROS = "responsabilidad_terceros"
+    MOTIVOS_INGRESO = (
+        (MOTIVO_FALLA_MASIVA, "Falla Masiva"),
+        (MOTIVO_RESPONSABILIDAD_TERCEROS, "Responsabilidad Terceros"),
+    )
+
+    FALLA_CORTE_FIBRA = "corte_fibra_accidental"
+    FALLA_CORTE_ENERGIA = "corte_energia"
+    FALLA_DESCONEXION_EQUIPOS = "desconexion_equipos"
+    FALLA_ROBO_EQUIPOS = "robo_equipos"
+    FALLA_CATASTROFE = "catastrofe"
+    MOTIVOS_FALLA_TERCEROS = (
+        (FALLA_CORTE_FIBRA, "Corte de fibra accidental"),
+        (FALLA_CORTE_ENERGIA, "Corte de energia electrica masivo o localizado"),
+        (FALLA_DESCONEXION_EQUIPOS, "Desconexion de equipos"),
+        (FALLA_ROBO_EQUIPOS, "Robo de equipos"),
+        (FALLA_CATASTROFE, "Catastrofe: incendio, inundaciones, etc."),
+    )
+
+    fecha_caida = models.DateField()
+    rbd = models.CharField(max_length=40)
+    motivo_ingreso = models.CharField(max_length=40, choices=MOTIVOS_INGRESO)
+    numero_ticket = models.CharField(max_length=80)
+    motivo_falla_terceros = models.CharField(max_length=60, choices=MOTIVOS_FALLA_TERCEROS)
+    id_falla_asociada = models.CharField(max_length=80, blank=True)
+    ticket_sagec = models.CharField(max_length=80, blank=True)
+    comentario_encargado = models.TextField(blank=True)
+    estado_sagec = models.CharField(
+        max_length=24,
+        choices=ESTADOS_SAGEC,
+        default=ESTADO_SAGEC_PREPARACION,
+    )
+    estado_sagec_actualizado_en = models.DateTimeField(null=True, blank=True)
+    estado_sagec_actualizado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="estados_sagec_actualizados",
+        null=True,
+        blank=True,
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="solicitudes_sagec",
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-creado_en",)
+        verbose_name = "solicitud SAGEC"
+        verbose_name_plural = "solicitudes SAGEC"
+
+    def __str__(self):
+        return f"SAGEC {self.numero_ticket} - RBD {self.rbd}"
 
 
 class EnlaceOperativo(models.Model):

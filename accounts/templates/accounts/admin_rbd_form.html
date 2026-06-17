@@ -10,7 +10,7 @@
       <div>
         <span>Editar RBD</span>
         <h2>{{ servicio.rbd }} - {{ servicio.nombre_establecimiento|default:"Sin nombre" }}</h2>
-        <p>Modifica informacion de colegio, servicio, BPI y jornada.</p>
+        <p>Modifica informacion de colegio, servicio, BPI, EF, IP y jornada.</p>
       </div>
       <a class="ghost-button" href="{% url 'admin_rbd' %}?q={{ servicio.rbd }}">Volver</a>
     </section>
@@ -33,7 +33,7 @@
         {% endif %}
         <div class="noc-admin-form-grid">
           {% for field in form %}
-            <div class="noc-admin-field{% if field.name == 'direccion' or field.name == 'bpi' or field.name == 'jornada_horario' or field.name == 'jornada_descripcion' %} is-wide{% endif %}{% if field.errors %} has-error{% endif %}">
+            <div class="noc-admin-field{% if field.name == 'direccion' or field.name == 'bpi' or field.name == 'codigo_servicio_oss' or field.name == 'ip' or field.name == 'jornada_horario' or field.name == 'jornada_descripcion' %} is-wide{% endif %}{% if field.name == 'bpi' or field.name == 'codigo_servicio_oss' or field.name == 'ip' %} is-key-rbd-field{% endif %}{% if field.errors %} has-error{% endif %}">
               <label for="{{ field.id_for_label }}">{{ field.label }}</label>
               {{ field }}
               {% for error in field.errors %}

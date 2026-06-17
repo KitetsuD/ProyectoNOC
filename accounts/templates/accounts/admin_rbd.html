@@ -10,7 +10,7 @@
       <div>
         <span>ADMIN</span>
         <h2>Administracion RBD</h2>
-        <p>Busca por numero de RBD para modificar la informacion cargada.</p>
+        <p>Busca por numero de RBD o BPI para modificar la informacion cargada.</p>
       </div>
       <strong class="ops-admin-chip">{{ total_rbd }} registros</strong>
     </section>
@@ -64,7 +64,12 @@
                   </div>
                 </td>
                 <td>{{ servicio.bpi|default:"Sin informacion" }}</td>
-                <td>{{ servicio.tecnologia_resumen }}{% if servicio.ip %} / {{ servicio.ip }}{% endif %}</td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.tecnologia_resumen }}</strong>
+                    <small>EF: {{ servicio.codigo_servicio_oss|default:"Sin informacion" }}{% if servicio.ip %} / IP: {{ servicio.ip }}{% endif %}</small>
+                  </div>
+                </td>
                 <td>
                   <div class="noc-user-actions">
                     <a class="noc-user-action" href="{% url 'admin_rbd_editar' servicio.id %}">Editar</a>

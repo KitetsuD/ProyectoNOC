@@ -1,0 +1,89 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}SAGEC | ProyectoNOC{% endblock %}
+{% block encabezado %}SAGEC{% endblock %}
+{% block menu_sagec %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="sicret-page">
+    <section class="sicret-hero">
+      <div>
+        <span>Solicitud interna</span>
+        <h2>Formulario ingreso SAGEC</h2>
+        <p>Registro operativo para solicitudes asociadas a falla masiva o responsabilidad de terceros.</p>
+      </div>
+      <strong>{{ total_solicitudes }}</strong>
+    </section>
+
+    <section class="sicret-layout">
+      <form class="sicret-form" method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="form-non-field-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <section class="sicret-panel">
+          <header>
+            <span>Identificacion</span>
+            <h2>Datos principales</h2>
+          </header>
+          <div class="sicret-grid">
+            <div class="sicret-field{% if form.fecha_caida.errors %} has-error{% endif %}">
+              <label for="{{ form.fecha_caida.id_for_label }}">{{ form.fecha_caida.label }} <span>*</span></label>
+              {{ form.fecha_caida }}
+              {% for error in form.fecha_caida.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field{% if form.rbd.errors %} has-error{% endif %}">
+              <label for="{{ form.rbd.id_for_label }}">{{ form.rbd.label }} <span>*</span></label>
+              {{ form.rbd }}
+              {% for error in form.rbd.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field is-wide{% if form.numero_ticket.errors %} has-error{% endif %}">
+              <label for="{{ form.numero_ticket.id_for_label }}">{{ form.numero_ticket.label }} <span>*</span></label>
+              {{ form.numero_ticket }}
+              {% for error in form.numero_ticket.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="sicret-panel">
+          <header>
+            <span>Clasificacion</span>
+            <h2>Motivo de ingreso</h2>
+          </header>
+          <div class="sicret-grid">
+            <div class="sicret-field is-wide{% if form.motivo_ingreso.errors %} has-error{% endif %}">
+              <label>{{ form.motivo_ingreso.label }} <span>*</span></label>
+              {{ form.motivo_ingreso }}
+              {% for error in form.motivo_ingreso.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="sicret-panel">
+          <header>
+            <span>Diagnostico</span>
+            <h2>Falla de terceros</h2>
+          </header>
+          <div class="sicret-grid">
+            <div class="sicret-field is-wide{% if form.motivo_falla_terceros.errors %} has-error{% endif %}">
+              <label>{{ form.motivo_falla_terceros.label }} <span>*</span></label>
+              {{ form.motivo_falla_terceros }}
+              {% for error in form.motivo_falla_terceros.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            <div class="sicret-field is-wide{% if form.id_falla_asociada.errors %} has-error{% endif %}">
+              <label for="{{ form.id_falla_asociada.id_for_label }}">{{ form.id_falla_asociada.label }}</label>
+              {{ form.id_falla_asociada }}
+              {% for error in form.id_falla_asociada.errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <div class="sicret-actions">
+          <button class="primary-button" type="submit">Registrar solicitud</button>
+          <button class="ghost-button" type="reset">Limpiar</button>
+        </div>
+      </form>
+    </section>
+  </section>
+{% endblock %}

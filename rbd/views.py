@@ -113,11 +113,11 @@ def _contact_from_model(contacto, orden):
 
 def _contacts_for_service(servicio):
     contactos = {contacto.orden: contacto for contacto in servicio.contactos.all()}
-    return [_contact_from_model(contactos.get(orden), orden) for orden in range(1, 4)]
+    return [_contact_from_model(contactos.get(orden), orden) for orden in range(1, 5)]
 
 
 def _full_copy_rows(servicio, contactos):
-    contacto_1, contacto_2, contacto_3 = contactos
+    contacto_1, contacto_2, contacto_3, contacto_4 = contactos
     rows = [
         ("RBD/ZONA/TECNOLOGIA", f"RBD_{servicio.rbd}_{_zona_corta(servicio.zona)}_{servicio.tecnologia_corta}"),
         ("NOMBRE", _plain(servicio.nombre_establecimiento)),
@@ -140,9 +140,16 @@ def _full_copy_rows(servicio, contactos):
         ("CARGO CT2", _plain(contacto_2["cargo"])),
         ("", ""),
         ("NOMBRE CT3", _plain(contacto_3["nombre"])),
+        ("TELEFONO CT3", _plain(contacto_3["telefono"])),
         ("CELULAR CT3", _plain(contacto_3["celular"])),
         ("MAIL CT3", _plain(contacto_3["email"])),
         ("CARGO CT3", _plain(contacto_3["cargo"])),
+        ("", ""),
+        ("NOMBRE CT4", _plain(contacto_4["nombre"])),
+        ("TELEFONO CT4", _plain(contacto_4["telefono"])),
+        ("CELULAR CT4", _plain(contacto_4["celular"])),
+        ("MAIL CT4", _plain(contacto_4["email"])),
+        ("CARGO CT4", _plain(contacto_4["cargo"])),
     ]
     return [{"label": label, "value": value} for label, value in rows]
 
@@ -193,7 +200,7 @@ def _guardar_contactos(request, servicio):
     contactos = []
     errores = []
 
-    for orden in range(1, 4):
+    for orden in range(1, 5):
         defaults = {
             campo: (request.POST.get(f"contacto_{orden}_{campo}") or "").strip()
             for campo in campos
@@ -245,7 +252,7 @@ def buscar_rbd(request):
         "colegio": [],
         "servicio": [],
         "servicio_texto": "",
-        "contactos": [_empty_contact(1), _empty_contact(2), _empty_contact(3)],
+        "contactos": [_empty_contact(1), _empty_contact(2), _empty_contact(3), _empty_contact(4)],
         "copiar_completo": [],
         "copiar_completo_texto": "",
     }

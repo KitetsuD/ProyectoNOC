@@ -15,13 +15,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
+from bitacora.models import RegistroBitacora
 from rbd.forms import AdminRbdSearchForm, AdminRbdServicioForm
 from rbd.models import RbdServicio
 from rbd.services.carga_completa import export_carga_completa
 
-from .forms import AdminCargaDatosForm, AdminTutorialDocumentoForm, AdminTutorialForm, AdminUserForm, EnlaceOperativoForm, ProcedimientoForm, SicretSolicitudForm
-from .models import EnlaceOperativo, Procedimiento, SolicitudSicret
-from .permissions import admin_required
+from .forms import AdminCargaDatosForm, AdminTutorialDocumentoForm, AdminTutorialForm, AdminUserForm, EnlaceOperativoForm, ProcedimientoForm, SagecSolicitudForm, SicretSolicitudForm
+from .models import EnlaceOperativo, Procedimiento, SolicitudSagec, SolicitudSicret
+from .permissions import PERFIL_ADMIN, admin_required, es_solo_rbd, etiqueta_perfil_usuario, operador_required, perfil_usuario
 from .services.tutoriales_docx import importar_tutoriales_docx
 
 
@@ -80,6 +81,8 @@ def _build_master_excel_response(filename="ProyectoNOC_Carga_Completa.xlsx"):
 
 @login_required
 def dashboard(request):
+    if es_solo_rbd(request.user):
+        return redirect("rbd:buscar")
     modules = [
         {
             "title": "Clientes y enlaces",
@@ -140,7 +143,7 @@ def dashboard(request):
     )
 
 
-@login_required
+@operador_required
 def procedimientos(request):
     listado = Procedimiento.objects.select_related("creado_por", "actualizado_por", "responsable")
     documentos = listado.filter(tipo=Procedimiento.TIPO_PROCEDIMIENTO)
@@ -179,7 +182,7 @@ def admin_tutoriales(request):
             else:
                 messages.success(
                     request,
-                    f"Documento procesado: {resultado['total']} tutoriales, {resultado['creados']} nuevos y {resultado['actualizados']} actualizados.",
+                    f"Documento procesado: {resultado['total']} procedimientos, {resultado['creados']} nuevos y {resultado['actualizados']} actualizados.",
                 )
                 return redirect("admin_tutoriales")
     elif request.method == "POST":
@@ -195,7 +198,7 @@ def admin_tutoriales(request):
             tutorial.actualizado_por = request.user
             tutorial.responsable = request.user
             tutorial.save()
-            messages.success(request, "Tutorial operativo cargado correctamente.")
+            messages.success(request, "Procedimiento operativo cargado correctamente.")
             return redirect("admin_tutoriales")
     else:
         form = AdminTutorialForm(initial={"activo": True})
@@ -235,7 +238,7 @@ def admin_tutorial_editar(request, tutorial_id):
             if not tutorial.responsable_id:
                 tutorial.responsable = request.user
             tutorial.save()
-            messages.success(request, "Tutorial actualizado correctamente.")
+            messages.success(request, "Procedimiento actualizado correctamente.")
             return redirect("admin_tutoriales")
     else:
         form = AdminTutorialForm(instance=tutorial)
@@ -252,9 +255,9 @@ def admin_tutorial_editar(request, tutorial_id):
 
 @_admin_required
 def admin_tutoriales_documento_base(request):
-    documento = Path(settings.BASE_DIR) / "docs" / "ProyectoNOC_Tutoriales_Operativos_Base.docx"
+    documento = Path(settings.BASE_DIR) / "docs" / "ProyectoNOC_Procedimientos_Operativos_Base.docx"
     if not documento.exists():
-        messages.error(request, "El documento base de tutoriales no esta disponible.")
+        messages.error(request, "El documento base de procedimientos no esta disponible.")
         return redirect("admin_tutoriales")
     return FileResponse(
         open(documento, "rb"),
@@ -263,13 +266,13 @@ def admin_tutoriales_documento_base(request):
     )
 
 
-@login_required
+@operador_required
 def procedimiento_archivo(request, procedimiento_id):
     procedimiento = get_object_or_404(Procedimiento, pk=procedimiento_id)
     if not request.user.is_staff and not procedimiento.activo:
         raise PermissionDenied
     if not procedimiento.archivo:
-        messages.error(request, "El tutorial no tiene archivo cargado.")
+        messages.error(request, "El procedimiento no tiene archivo cargado.")
         return redirect("procedimientos")
     return FileResponse(
         procedimiento.archivo.open("rb"),
@@ -278,7 +281,7 @@ def procedimiento_archivo(request, procedimiento_id):
     )
 
 
-@login_required
+@operador_required
 def enlaces_operativos(request):
     if request.method == "POST":
         if not request.user.is_staff:
@@ -340,7 +343,7 @@ def procedimiento_toggle(request, procedimiento_id):
     return redirect("admin_tutoriales")
 
 
-@login_required
+@operador_required
 def sicret(request):
     if request.method == "POST":
         form = SicretSolicitudForm(request.POST)
@@ -368,16 +371,21 @@ def sicret(request):
     )
 
 
-@login_required
+@operador_required
 def sicret_tickets(request):
     solicitudes_base = SolicitudSicret.objects.select_related(
         "creado_por",
         "estado_sicret_actualizado_por",
-    )
+    ).exclude(estado_sicret=SolicitudSicret.ESTADO_SICRET_CERRADO)
 
     query = (request.GET.get("q") or "").strip()
     estado = (request.GET.get("estado") or "").strip()
-    estados_validos = {valor for valor, _ in SolicitudSicret.ESTADOS_SICRET}
+    estados_operativos = [
+        (valor, etiqueta)
+        for valor, etiqueta in SolicitudSicret.ESTADOS_SICRET
+        if valor != SolicitudSicret.ESTADO_SICRET_CERRADO
+    ]
+    estados_validos = {valor for valor, _ in estados_operativos}
 
     if query:
         solicitudes_base = solicitudes_base.filter(
@@ -396,7 +404,7 @@ def sicret_tickets(request):
             "etiqueta": etiqueta,
             "total": solicitudes_base.filter(estado_sicret=valor).count(),
         }
-        for valor, etiqueta in SolicitudSicret.ESTADOS_SICRET
+        for valor, etiqueta in estados_operativos
     ]
 
     solicitudes = solicitudes_base
@@ -404,7 +412,6 @@ def sicret_tickets(request):
         solicitudes = solicitudes.filter(estado_sicret=estado)
     else:
         estado = ""
-        solicitudes = solicitudes.exclude(estado_sicret=SolicitudSicret.ESTADO_SICRET_CERRADO)
 
     total = solicitudes.count()
 
@@ -415,6 +422,7 @@ def sicret_tickets(request):
             "solicitudes": solicitudes[:80],
             "total_solicitudes": total,
             "estados_sicret": SolicitudSicret.ESTADOS_SICRET,
+            "estados_sicret_filtro": estados_operativos,
             "resumen_estados": resumen_estados,
             "query": query,
             "estado_actual": estado,
@@ -422,7 +430,77 @@ def sicret_tickets(request):
     )
 
 
-@login_required
+@_admin_required
+def admin_historial_operativo(request):
+    query = (request.GET.get("q") or "").strip()
+
+    sicret_cerrados = SolicitudSicret.objects.select_related(
+        "creado_por",
+        "estado_sicret_actualizado_por",
+    ).filter(estado_sicret=SolicitudSicret.ESTADO_SICRET_CERRADO)
+
+    llamadas_realizadas = RegistroBitacora.objects.select_related("usuario").filter(
+        llamada_realizada=True,
+    )
+
+    sagec_cerrados = SolicitudSagec.objects.select_related(
+        "creado_por",
+        "estado_sagec_actualizado_por",
+    ).filter(estado_sagec=SolicitudSagec.ESTADO_SAGEC_CERRADO)
+
+    if query:
+        sicret_cerrados = sicret_cerrados.filter(
+            Q(ticket_netcracker__icontains=query)
+            | Q(ticket_sicret__icontains=query)
+            | Q(rbd__icontains=query)
+            | Q(nombre_escuela__icontains=query)
+            | Q(ip_servicio__icontains=query)
+            | Q(comentario_encargado__icontains=query)
+        )
+        llamadas_realizadas = llamadas_realizadas.filter(
+            Q(ticket__icontains=query)
+            | Q(rbd__icontains=query)
+            | Q(vinculo_ticket__icontains=query)
+            | Q(usuario__username__icontains=query)
+        )
+        sagec_cerrados = sagec_cerrados.filter(
+            Q(numero_ticket__icontains=query)
+            | Q(ticket_sagec__icontains=query)
+            | Q(rbd__icontains=query)
+            | Q(id_falla_asociada__icontains=query)
+            | Q(comentario_encargado__icontains=query)
+        )
+
+    total_sicret = sicret_cerrados.count()
+    total_llamadas = llamadas_realizadas.count()
+    total_sagec = sagec_cerrados.count()
+
+    return render(
+        request,
+        "accounts/admin_historial_operativo.html",
+        {
+            "query": query,
+            "sicret_cerrados": sicret_cerrados.order_by(
+                "-estado_sicret_actualizado_en",
+                "-creado_en",
+            )[:120],
+            "llamadas_realizadas": llamadas_realizadas.order_by(
+                "-llamada_actualizada_en",
+                "-dia",
+                "-hora",
+            )[:120],
+            "sagec_cerrados": sagec_cerrados.order_by(
+                "-estado_sagec_actualizado_en",
+                "-creado_en",
+            )[:120],
+            "total_sicret": total_sicret,
+            "total_llamadas": total_llamadas,
+            "total_sagec": total_sagec,
+        },
+    )
+
+
+@operador_required
 def sicret_ticket_estado(request, solicitud_id):
     if request.method != "POST":
         return redirect("sicret_tickets")
@@ -455,7 +533,7 @@ def sicret_ticket_estado(request, solicitud_id):
     return redirect("sicret_tickets")
 
 
-@login_required
+@operador_required
 def sicret_rbd_info(request):
     rbd = (request.GET.get("rbd") or "").strip()
     if not rbd:
@@ -494,7 +572,122 @@ def sicret_rbd_info(request):
     )
 
 
-@login_required
+@operador_required
+def sagec(request):
+    if request.method == "POST":
+        form = SagecSolicitudForm(request.POST)
+        if form.is_valid():
+            solicitud = form.save(commit=False)
+            solicitud.creado_por = request.user
+            solicitud.save()
+            messages.success(request, "Solicitud SAGEC registrada correctamente.")
+            return redirect("sagec")
+    else:
+        form = SagecSolicitudForm()
+
+    total_solicitudes = SolicitudSagec.objects.count()
+
+    return render(
+        request,
+        "accounts/sagec.html",
+        {
+            "form": form,
+            "total_solicitudes": total_solicitudes,
+        },
+    )
+
+
+@operador_required
+def sagec_tickets(request):
+    solicitudes_base = SolicitudSagec.objects.select_related(
+        "creado_por",
+        "estado_sagec_actualizado_por",
+    ).exclude(estado_sagec=SolicitudSagec.ESTADO_SAGEC_CERRADO)
+
+    query = (request.GET.get("q") or "").strip()
+    estado = (request.GET.get("estado") or "").strip()
+    estados_operativos = [
+        (valor, etiqueta)
+        for valor, etiqueta in SolicitudSagec.ESTADOS_SAGEC
+        if valor != SolicitudSagec.ESTADO_SAGEC_CERRADO
+    ]
+    estados_validos = {valor for valor, _ in estados_operativos}
+
+    if query:
+        solicitudes_base = solicitudes_base.filter(
+            Q(numero_ticket__icontains=query)
+            | Q(ticket_sagec__icontains=query)
+            | Q(rbd__icontains=query)
+            | Q(id_falla_asociada__icontains=query)
+            | Q(comentario_encargado__icontains=query)
+        )
+
+    resumen_estados = [
+        {
+            "valor": valor,
+            "etiqueta": etiqueta,
+            "total": solicitudes_base.filter(estado_sagec=valor).count(),
+        }
+        for valor, etiqueta in estados_operativos
+    ]
+
+    solicitudes = solicitudes_base
+    if estado in estados_validos:
+        solicitudes = solicitudes.filter(estado_sagec=estado)
+    else:
+        estado = ""
+
+    total = solicitudes.count()
+
+    return render(
+        request,
+        "accounts/sagec_tickets.html",
+        {
+            "solicitudes": solicitudes[:80],
+            "total_solicitudes": total,
+            "estados_sagec": SolicitudSagec.ESTADOS_SAGEC,
+            "estados_sagec_filtro": estados_operativos,
+            "resumen_estados": resumen_estados,
+            "query": query,
+            "estado_actual": estado,
+        },
+    )
+
+
+@operador_required
+def sagec_ticket_estado(request, solicitud_id):
+    if request.method != "POST":
+        return redirect("sagec_tickets")
+
+    solicitud = get_object_or_404(SolicitudSagec, pk=solicitud_id)
+
+    estado = (request.POST.get("estado_sagec") or "").strip()
+    estados_validos = {valor for valor, _ in SolicitudSagec.ESTADOS_SAGEC}
+    if estado not in estados_validos:
+        messages.error(request, "Estado SAGEC no valido.")
+        return redirect("sagec_tickets")
+
+    update_fields = [
+        "estado_sagec",
+        "estado_sagec_actualizado_por",
+        "estado_sagec_actualizado_en",
+    ]
+
+    solicitud.estado_sagec = estado
+    if "ticket_sagec" in request.POST:
+        solicitud.ticket_sagec = (request.POST.get("ticket_sagec") or "").strip()
+        update_fields.append("ticket_sagec")
+    if "comentario_encargado" in request.POST:
+        solicitud.comentario_encargado = (request.POST.get("comentario_encargado") or "").strip()
+        update_fields.append("comentario_encargado")
+    solicitud.estado_sagec_actualizado_por = request.user
+    solicitud.estado_sagec_actualizado_en = timezone.now()
+    solicitud.save(update_fields=update_fields)
+    messages.success(request, f"Ticket {solicitud.numero_ticket} actualizado.")
+    return redirect("sagec_tickets")
+
+
+@operador_required
 def procedimiento_accion(request, procedimiento_id):
     procedimiento = get_object_or_404(Procedimiento, pk=procedimiento_id)
     if not request.user.is_staff and procedimiento.responsable_id != request.user.id and procedimiento.creado_por_id != request.user.id:
@@ -572,8 +765,12 @@ def admin_rbd(request):
     if form.is_valid():
         termino = form.cleaned_data["q"].strip()
         if termino:
-            resultados = RbdServicio.objects.filter(rbd=int(termino)).order_by("rbd")
-            titulo_resultados = f"Resultado para RBD {termino}"
+            resultados = RbdServicio.objects.filter(Q(bpi__icontains=termino)).order_by("rbd")
+            if termino.isdigit():
+                resultados = RbdServicio.objects.filter(
+                    Q(rbd=int(termino)) | Q(bpi__icontains=termino)
+                ).order_by("rbd")
+            titulo_resultados = f'Resultados para "{termino}"'
 
     return render(
         request,
@@ -613,7 +810,10 @@ def admin_rbd_editar(request, servicio_id):
 @_admin_required
 def admin_usuarios(request):
     User = get_user_model()
-    usuarios = User.objects.order_by("-is_staff", "-is_active", "username")
+    usuarios = list(User.objects.prefetch_related("groups").order_by("-is_staff", "-is_active", "username"))
+    for usuario in usuarios:
+        usuario.perfil_valor = perfil_usuario(usuario)
+        usuario.perfil_etiqueta = etiqueta_perfil_usuario(usuario)
     return render(
         request,
         "accounts/admin_user_list.html",
@@ -644,7 +844,7 @@ def admin_usuario_editar(request, user_id):
     if request.method == "POST":
         form = AdminUserForm(request.POST, instance=user)
         if form.is_valid():
-            nuevo_staff = form.cleaned_data["is_staff"]
+            nuevo_staff = form.cleaned_data["perfil"] == PERFIL_ADMIN
             nuevo_activo = form.cleaned_data["is_active"]
             if user == request.user and (not nuevo_staff or not nuevo_activo):
                 form.add_error(None, "No puedes quitar tu propio acceso ADMIN.")

@@ -1,10 +1,12 @@
+import re
 from pathlib import Path
 
 from django import forms
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from .models import EnlaceOperativo, Procedimiento, SolicitudSicret
+from .models import EnlaceOperativo, Procedimiento, SolicitudSagec, SolicitudSicret
+from .permissions import PERFIL_CHOICES, PERFIL_OPERADOR, aplicar_perfil_usuario, perfil_usuario
 
 
 def _clean_documento_apoyo(enlace):
@@ -38,6 +40,12 @@ class AdminCargaDatosForm(forms.Form):
 
 
 class AdminUserForm(forms.ModelForm):
+    perfil = forms.ChoiceField(
+        label="Perfil",
+        choices=PERFIL_CHOICES,
+        initial=PERFIL_OPERADOR,
+        widget=forms.Select(attrs={"class": "admin-control"}),
+    )
     password1 = forms.CharField(
         label="Clave",
         required=False,
@@ -51,14 +59,13 @@ class AdminUserForm(forms.ModelForm):
 
     class Meta:
         model = get_user_model()
-        fields = ("username", "first_name", "last_name", "email", "is_active", "is_staff")
+        fields = ("username", "first_name", "last_name", "email", "perfil", "is_active")
         labels = {
             "username": "Usuario",
             "first_name": "Nombre",
             "last_name": "Apellido",
             "email": "Email",
             "is_active": "Usuario activo",
-            "is_staff": "Perfil ADMIN",
         }
         widgets = {
             "username": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
@@ -66,12 +73,13 @@ class AdminUserForm(forms.ModelForm):
             "last_name": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
             "email": forms.EmailInput(attrs={"class": "admin-control", "autocomplete": "off"}),
             "is_active": forms.CheckboxInput(attrs={"class": "admin-check"}),
-            "is_staff": forms.CheckboxInput(attrs={"class": "admin-check"}),
         }
 
     def __init__(self, *args, creating=False, **kwargs):
         self.creating = creating
         super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["perfil"].initial = perfil_usuario(self.instance)
         if creating:
             self.fields["password1"].required = True
             self.fields["password2"].required = True
@@ -103,8 +111,10 @@ class AdminUserForm(forms.ModelForm):
         password = self.cleaned_data.get("password1")
         if password:
             user.set_password(password)
+        aplicar_perfil_usuario(user, self.cleaned_data.get("perfil") or PERFIL_OPERADOR)
         if commit:
             user.save()
+            aplicar_perfil_usuario(user, self.cleaned_data.get("perfil") or PERFIL_OPERADOR)
         return user
 
 
@@ -139,11 +149,11 @@ class ProcedimientoForm(forms.ModelForm):
             "activo",
         )
         labels = {
-            "titulo": "Nombre del tutorial",
+            "titulo": "Nombre del procedimiento",
             "tipo": "Tipo",
             "categoria": "Caso / categoria",
             "descripcion": "Cuando usarlo",
-            "contenido": "Pasos del tutorial",
+            "contenido": "Pasos del procedimiento",
             "fecha_compromiso": "Fecha compromiso",
             "prioridad": "Prioridad",
             "responsable": "Responsable",
@@ -226,10 +236,10 @@ class AdminTutorialForm(forms.ModelForm):
             "activo",
         )
         labels = {
-            "titulo": "Nombre del tutorial",
+            "titulo": "Nombre del procedimiento",
             "categoria": "Caso / categoria",
             "descripcion": "Cuando usarlo",
-            "contenido": "Pasos del tutorial",
+            "contenido": "Pasos del procedimiento",
             "enlace": "Documento de apoyo externo",
             "archivo": "Cargar documento",
             "orden": "Orden visual",
@@ -261,7 +271,7 @@ class AdminTutorialForm(forms.ModelForm):
 
 class AdminTutorialDocumentoForm(forms.Form):
     archivo = forms.FileField(
-        label="Documento base de tutoriales",
+        label="Documento base de procedimientos",
         widget=forms.ClearableFileInput(attrs={"class": "admin-file-input", "accept": ".docx"}),
     )
 
@@ -350,3 +360,44 @@ class SicretSolicitudForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["descripcion_falla"].choices = [("", "Elige"), *SolicitudSicret.TIPOS_FALLA]
+
+
+class SagecSolicitudForm(forms.ModelForm):
+    class Meta:
+        model = SolicitudSagec
+        fields = (
+            "fecha_caida",
+            "rbd",
+            "motivo_ingreso",
+            "numero_ticket",
+            "motivo_falla_terceros",
+            "id_falla_asociada",
+        )
+        labels = {
+            "fecha_caida": "Fecha de caida",
+            "rbd": "RBD con problemas",
+            "motivo_ingreso": "Motivo de ingreso",
+            "numero_ticket": "Numero de ticket",
+            "motivo_falla_terceros": "Motivo de falla terceros",
+            "id_falla_asociada": "ID de falla asociada",
+        }
+        widgets = {
+            "fecha_caida": forms.DateInput(attrs={"class": "sicret-control", "type": "date"}),
+            "rbd": forms.TextInput(attrs={"class": "sicret-control", "autocomplete": "off", "placeholder": "Escriba su respuesta"}),
+            "motivo_ingreso": forms.RadioSelect(attrs={"class": "sicret-radio-list"}),
+            "numero_ticket": forms.TextInput(attrs={"class": "sicret-control", "autocomplete": "off", "placeholder": "Ej: 2025 123456"}),
+            "motivo_falla_terceros": forms.RadioSelect(attrs={"class": "sicret-radio-list"}),
+            "id_falla_asociada": forms.TextInput(attrs={"class": "sicret-control", "autocomplete": "off", "placeholder": "Solo el numero, si aplica"}),
+        }
+
+    def clean_rbd(self):
+        rbd = (self.cleaned_data.get("rbd") or "").strip()
+        if not rbd.isdigit():
+            raise forms.ValidationError("El RBD debe ser numerico.")
+        return rbd
+
+    def clean_numero_ticket(self):
+        numero_ticket = (self.cleaned_data.get("numero_ticket") or "").strip()
+        if not re.match(r"^\d{4}\s+\d{5,}$", numero_ticket):
+            raise forms.ValidationError("Respeta el formato: 2025 123456.")
+        return numero_ticket

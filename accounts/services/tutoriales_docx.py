@@ -211,7 +211,7 @@ def parse_tutoriales_docx(uploaded_file):
 
     if not tutorials:
         raise ValueError(
-            "No se encontraron tutoriales. Usa el documento base con titulos numerados y secciones 'Cuando usarlo', 'Pasos a seguir' y 'Documento completo de apoyo'."
+            "No se encontraron procedimientos. Usa el documento base con titulos numerados y secciones 'Cuando usarlo', 'Pasos a seguir' y 'Documento completo de apoyo'."
         )
     return tutorials
 

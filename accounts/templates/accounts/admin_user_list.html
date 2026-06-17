@@ -59,8 +59,8 @@
                   </div>
                 </td>
                 <td>
-                  <span class="noc-admin-badge{% if usuario.is_staff %} is-admin{% endif %}">
-                    {% if usuario.is_staff %}ADMIN{% else %}OPERADOR{% endif %}
+                  <span class="noc-admin-badge{% if usuario.perfil_valor == 'admin' %} is-admin{% elif usuario.perfil_valor == 'rbd' %} is-rbd{% endif %}">
+                    {{ usuario.perfil_etiqueta|upper }}
                   </span>
                 </td>
                 <td>

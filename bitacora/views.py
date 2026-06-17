@@ -3,7 +3,6 @@ import json
 from datetime import date, datetime, time, timedelta
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.http import JsonResponse
@@ -11,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.permissions import puede_gestionar_bitacora
+from accounts.permissions import operador_required, puede_gestionar_bitacora
 
 from .forms import RegistroBitacoraForm
 from .models import RegistroBitacora
@@ -20,6 +19,13 @@ from .models import RegistroBitacora
 CALENDAR_START = time(8, 0)
 CALENDAR_END = time(18, 45)
 SLOT_MINUTES = 15
+
+
+def _registros_activos_queryset():
+    return RegistroBitacora.objects.select_related("usuario").filter(
+        estado=RegistroBitacora.ESTADO_AGENDADA,
+        llamada_realizada=False,
+    )
 
 
 def _parse_date(value):
@@ -107,10 +113,9 @@ def _month_context(selected_day):
     last_day = first_day.replace(day=month_days)
     grid_start = first_day - timedelta(days=first_day.weekday())
     grid_end = grid_start + timedelta(days=41)
-    registros = RegistroBitacora.objects.select_related("usuario").filter(
+    registros = _registros_activos_queryset().filter(
         dia__gte=grid_start,
         dia__lte=grid_end,
-        estado=RegistroBitacora.ESTADO_AGENDADA,
     ).order_by("dia", "hora")
     registros_por_dia = {}
     for registro in registros:
@@ -156,7 +161,7 @@ def _month_context(selected_day):
     }
 
 
-@login_required
+@operador_required
 def crear_bitacora(request):
     if request.method == "POST":
         form = RegistroBitacoraForm(request.POST)
@@ -179,9 +184,7 @@ def crear_bitacora(request):
             initial["hora"] = hora_inicial
         form = RegistroBitacoraForm(initial=initial)
 
-    registros = RegistroBitacora.objects.select_related("usuario").filter(
-        estado=RegistroBitacora.ESTADO_AGENDADA,
-    ).order_by("-dia", "-hora")[:8]
+    registros = _registros_activos_queryset().order_by("-dia", "-hora")[:8]
     usuario_contacto = request.user.email or request.user.username
     agenda = _agenda_context(dia_calendario)
 
@@ -201,7 +204,7 @@ def crear_bitacora(request):
     )
 
 
-@login_required
+@operador_required
 def editar_bitacora(request, registro_id):
     registro = get_object_or_404(RegistroBitacora, pk=registro_id)
     if not puede_gestionar_bitacora(request.user, registro):
@@ -226,9 +229,7 @@ def editar_bitacora(request, registro_id):
         form = RegistroBitacoraForm(instance=registro)
 
     agenda = _agenda_context(dia_calendario)
-    registros = RegistroBitacora.objects.select_related("usuario").filter(
-        estado=RegistroBitacora.ESTADO_AGENDADA,
-    ).order_by("-dia", "-hora")[:8]
+    registros = _registros_activos_queryset().order_by("-dia", "-hora")[:8]
     return render(
         request,
         "bitacora/formulario.html",
@@ -247,7 +248,7 @@ def editar_bitacora(request, registro_id):
     )
 
 
-@login_required
+@operador_required
 def cancelar_bitacora(request, registro_id):
     registro = get_object_or_404(RegistroBitacora, pk=registro_id)
     if not puede_gestionar_bitacora(request.user, registro):
@@ -268,7 +269,7 @@ def cancelar_bitacora(request, registro_id):
     return redirect(f"{reverse('bitacora:calendario')}?dia={registro.dia:%Y-%m-%d}")
 
 
-@login_required
+@operador_required
 def cambiar_estado_llamada(request, registro_id):
     registro = get_object_or_404(RegistroBitacora, pk=registro_id)
     if not puede_gestionar_bitacora(request.user, registro):
@@ -284,16 +285,13 @@ def cambiar_estado_llamada(request, registro_id):
     return redirect(f"{reverse('bitacora:calendario')}?dia={registro.dia:%Y-%m-%d}")
 
 
-@login_required
+@operador_required
 def calendario_bitacora(request):
     dia_calendario = _parse_date(request.GET.get("dia"))
-    proximos = RegistroBitacora.objects.select_related("usuario").filter(
+    proximos = _registros_activos_queryset().filter(
         dia__gte=timezone.localdate(),
-        estado=RegistroBitacora.ESTADO_AGENDADA,
     ).order_by("dia", "hora")[:12]
-    lista_agendas = RegistroBitacora.objects.select_related("usuario").filter(
-        estado=RegistroBitacora.ESTADO_AGENDADA,
-    ).order_by("dia", "hora")[:40]
+    lista_agendas = _registros_activos_queryset().order_by("dia", "hora")[:40]
     agenda = _agenda_context(dia_calendario)
     month = _month_context(dia_calendario)
     return render(
@@ -303,7 +301,7 @@ def calendario_bitacora(request):
     )
 
 
-@login_required
+@operador_required
 def disponibilidad_bitacora(request):
     dia = _parse_date(request.GET.get("dia"))
     excluir = request.GET.get("excluir")

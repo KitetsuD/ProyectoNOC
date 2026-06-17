@@ -33,7 +33,7 @@
         <span>Estado</span>
         <select class="sicret-control" name="estado">
           <option value="">Todos</option>
-          {% for value, label in estados_sicret %}
+          {% for value, label in estados_sicret_filtro %}
             <option value="{{ value }}"{% if estado_actual == value %} selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
@@ -74,6 +74,10 @@
                     <strong>{{ solicitud.ticket_netcracker }}</strong>
                     <small>{{ solicitud.instancia }}</small>
                     <small>{{ solicitud.creado_en|date:"d/m/Y H:i" }} - {{ solicitud.creado_por.username }}</small>
+                    <textarea id="sicretEscalamiento{{ solicitud.id }}" hidden readonly>{{ solicitud.escalamiento_texto }}</textarea>
+                    <button class="sicret-copy-row" type="button" data-copy-source="sicretEscalamiento{{ solicitud.id }}">
+                      Copiar escalamiento
+                    </button>
                   </td>
                   <td>
                     <input class="sicret-control sicret-table-input" name="ticket_sicret" value="{{ solicitud.ticket_sicret }}" autocomplete="off" placeholder="Pendiente" form="sicretUpdate{{ solicitud.id }}">
