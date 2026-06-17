@@ -34,7 +34,7 @@ class Procedimiento(models.Model):
     categoria = models.CharField(max_length=80, blank=True)
     descripcion = models.CharField(max_length=260, blank=True)
     contenido = models.TextField(blank=True)
-    enlace = models.URLField(max_length=500, blank=True)
+    enlace = models.CharField(max_length=500, blank=True)
     archivo = models.FileField(upload_to="procedimientos/", blank=True)
     orden = models.PositiveIntegerField(default=0)
     estado = models.CharField(max_length=16, choices=ESTADOS, default=ESTADO_PENDIENTE)

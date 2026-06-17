@@ -7,6 +7,17 @@ from django.utils import timezone
 from .models import EnlaceOperativo, Procedimiento, SolicitudSicret
 
 
+def _clean_documento_apoyo(enlace):
+    enlace = (enlace or "").strip()
+    if not enlace:
+        return ""
+    if enlace.startswith("/") or enlace.startswith(("http://", "https://")):
+        return enlace
+    raise forms.ValidationError(
+        "Usa una URL completa o una ruta interna que comience con /."
+    )
+
+
 class AdminCargaDatosForm(forms.Form):
     archivo = forms.FileField(
         label="Excel maestro",
@@ -98,6 +109,18 @@ class AdminUserForm(forms.ModelForm):
 
 
 class ProcedimientoForm(forms.ModelForm):
+    enlace = forms.CharField(
+        label="Documento de apoyo externo",
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "admin-control",
+                "autocomplete": "off",
+                "placeholder": "https://... o /static/...",
+            }
+        ),
+    )
+
     class Meta:
         model = Procedimiento
         fields = (
@@ -140,7 +163,6 @@ class ProcedimientoForm(forms.ModelForm):
             "prioridad": forms.Select(attrs={"class": "admin-control"}),
             "responsable": forms.Select(attrs={"class": "admin-control"}),
             "resultado": forms.Textarea(attrs={"class": "admin-control", "rows": 3}),
-            "enlace": forms.URLInput(attrs={"class": "admin-control", "autocomplete": "off"}),
             "archivo": forms.ClearableFileInput(attrs={"class": "admin-control"}),
             "orden": forms.NumberInput(attrs={"class": "admin-control", "min": 0}),
             "activo": forms.CheckboxInput(attrs={"class": "admin-check"}),
@@ -168,6 +190,9 @@ class ProcedimientoForm(forms.ModelForm):
             raise forms.ValidationError("Formato no permitido. Usa PDF, Word, PowerPoint o Excel.")
         return archivo
 
+    def clean_enlace(self):
+        return _clean_documento_apoyo(self.cleaned_data.get("enlace"))
+
     def clean_fecha_compromiso(self):
         fecha = self.cleaned_data.get("fecha_compromiso")
         if fecha and fecha < timezone.localdate():
@@ -176,6 +201,18 @@ class ProcedimientoForm(forms.ModelForm):
 
 
 class AdminTutorialForm(forms.ModelForm):
+    enlace = forms.CharField(
+        label="Documento de apoyo externo",
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "admin-control",
+                "autocomplete": "off",
+                "placeholder": "https://... o /static/...",
+            }
+        ),
+    )
+
     class Meta:
         model = Procedimiento
         fields = (
@@ -203,7 +240,6 @@ class AdminTutorialForm(forms.ModelForm):
             "categoria": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
             "descripcion": forms.TextInput(attrs={"class": "admin-control", "autocomplete": "off"}),
             "contenido": forms.Textarea(attrs={"class": "admin-control", "rows": 7}),
-            "enlace": forms.URLInput(attrs={"class": "admin-control", "autocomplete": "off"}),
             "archivo": forms.ClearableFileInput(attrs={"class": "admin-control"}),
             "orden": forms.NumberInput(attrs={"class": "admin-control", "min": 0}),
             "activo": forms.CheckboxInput(attrs={"class": "admin-check"}),
@@ -218,6 +254,9 @@ class AdminTutorialForm(forms.ModelForm):
         if extension not in permitidas:
             raise forms.ValidationError("Formato no permitido. Usa PDF, Word, PowerPoint o Excel.")
         return archivo
+
+    def clean_enlace(self):
+        return _clean_documento_apoyo(self.cleaned_data.get("enlace"))
 
 
 class AdminTutorialDocumentoForm(forms.Form):
