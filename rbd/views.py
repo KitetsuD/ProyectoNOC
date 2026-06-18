@@ -59,6 +59,13 @@ def _colegio_especial(servicio):
     return "SI" if "ESPECIAL" in nombre else "NO"
 
 
+def _jornada_clase(servicio):
+    categoria = (servicio.jornada_categoria or "").strip().lower()[:1]
+    if categoria in {"a", "b", "c", "d", "e"}:
+        return f"jornada-{categoria}"
+    return ""
+
+
 def _zona_corta(zona):
     zona = str(zona or "").strip().upper()
     if zona.startswith("ZONA"):
@@ -192,6 +199,7 @@ def _build_detail(servicio):
         "servicio": servicio_items,
         "servicio_texto": servicio_texto,
         "contactos": contactos,
+        "jornada_clase": _jornada_clase(servicio),
         "copiar_completo": copiar_completo,
         "copiar_completo_texto": "\n".join(f"{row['label']}\t{row['value']}" for row in copiar_completo),
     }
@@ -255,6 +263,7 @@ def buscar_rbd(request):
         "servicio": [],
         "servicio_texto": "",
         "contactos": [_empty_contact(1), _empty_contact(2), _empty_contact(3), _empty_contact(4)],
+        "jornada_clase": "",
         "copiar_completo": [],
         "copiar_completo_texto": "",
     }

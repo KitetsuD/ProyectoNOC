@@ -4857,6 +4857,131 @@ a {
   line-height: 1.35;
 }
 
+.rbd-jornada-card.jornada-a {
+  border-color: #86efac;
+}
+
+.rbd-jornada-card.jornada-a .rbd-chip-title {
+  background: #166534;
+}
+
+.rbd-jornada-card.jornada-a .rbd-jornada-body {
+  background: #f0fdf4;
+}
+
+.rbd-jornada-card.jornada-a .rbd-jornada-head strong {
+  color: #14532d;
+}
+
+.rbd-jornada-card.jornada-a .rbd-jornada-head span {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.rbd-jornada-card.jornada-a .rbd-jornada-body p {
+  color: #166534;
+}
+
+.rbd-jornada-card.jornada-b {
+  border-color: #93c5fd;
+}
+
+.rbd-jornada-card.jornada-b .rbd-chip-title {
+  background: #1d4ed8;
+}
+
+.rbd-jornada-card.jornada-b .rbd-jornada-body {
+  background: #eff6ff;
+}
+
+.rbd-jornada-card.jornada-b .rbd-jornada-head strong {
+  color: #1e3a8a;
+}
+
+.rbd-jornada-card.jornada-b .rbd-jornada-head span {
+  background: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.rbd-jornada-card.jornada-b .rbd-jornada-body p {
+  color: #1d4ed8;
+}
+
+.rbd-jornada-card.jornada-c {
+  border-color: #fde68a;
+}
+
+.rbd-jornada-card.jornada-c .rbd-chip-title {
+  background: #b45309;
+}
+
+.rbd-jornada-card.jornada-c .rbd-jornada-body {
+  background: #fffbeb;
+}
+
+.rbd-jornada-card.jornada-c .rbd-jornada-head strong {
+  color: #78350f;
+}
+
+.rbd-jornada-card.jornada-c .rbd-jornada-head span {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.rbd-jornada-card.jornada-c .rbd-jornada-body p {
+  color: #92400e;
+}
+
+.rbd-jornada-card.jornada-d {
+  border-color: #c4b5fd;
+}
+
+.rbd-jornada-card.jornada-d .rbd-chip-title {
+  background: #6d28d9;
+}
+
+.rbd-jornada-card.jornada-d .rbd-jornada-body {
+  background: #f5f3ff;
+}
+
+.rbd-jornada-card.jornada-d .rbd-jornada-head strong {
+  color: #4c1d95;
+}
+
+.rbd-jornada-card.jornada-d .rbd-jornada-head span {
+  background: #ddd6fe;
+  color: #6d28d9;
+}
+
+.rbd-jornada-card.jornada-d .rbd-jornada-body p {
+  color: #6d28d9;
+}
+
+.rbd-jornada-card.jornada-e {
+  border-color: #fca5a5;
+}
+
+.rbd-jornada-card.jornada-e .rbd-chip-title {
+  background: #b91c1c;
+}
+
+.rbd-jornada-card.jornada-e .rbd-jornada-body {
+  background: #fef2f2;
+}
+
+.rbd-jornada-card.jornada-e .rbd-jornada-head strong {
+  color: #7f1d1d;
+}
+
+.rbd-jornada-card.jornada-e .rbd-jornada-head span {
+  background: #fecaca;
+  color: #b91c1c;
+}
+
+.rbd-jornada-card.jornada-e .rbd-jornada-body p {
+  color: #b91c1c;
+}
+
 /* NOC admin tools */
 .admin-menu-section-label {
   display: block;
