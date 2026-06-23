@@ -143,8 +143,18 @@
                       <div class="rbd-contact-block rbd-contact-edit">
                         <div class="rbd-contact-title-row">
                           <h3>{{ contacto.role }}</h3>
-                          <span>CT{{ contacto.orden }}</span>
+                          <div class="rbd-contact-title-actions">
+                            <span>CT{{ contacto.orden }}</span>
+                            <button class="rbd-contact-copy-button" type="button" data-copy-source="rbdContactCopy{{ contacto.orden }}" aria-label="Copiar {{ contacto.role }}" title="Copiar {{ contacto.role }}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8 8h10v12H8Z"></path>
+                                <path d="M5 16H4V4h12v1"></path>
+                              </svg>
+                              Copiar
+                            </button>
+                          </div>
                         </div>
+                        <textarea id="rbdContactCopy{{ contacto.orden }}" hidden>{{ contacto.copy_text }}</textarea>
                         <div class="rbd-contact-field">
                           <label for="contacto_{{ contacto.orden }}_nombre">Nombre</label>
                           <input id="contacto_{{ contacto.orden }}_nombre" name="contacto_{{ contacto.orden }}_nombre" value="{{ contacto.nombre }}" autocomplete="off" disabled data-contact-input>

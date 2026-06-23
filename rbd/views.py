@@ -80,8 +80,37 @@ def _plain(value, default="0"):
     return value or default
 
 
+def _copy_value(value):
+    if value is None:
+        return ""
+    value = str(value).strip()
+    if value.lower() in {"0", "0.0", "0,0", "none", "null"}:
+        return ""
+    return value
+
+
+def _rbd_zona_tecnologia(servicio):
+    zona = _copy_value(servicio.zona)
+    tecnologia = _copy_value(servicio.tecnologia or servicio.tipo)
+    tecnologia_corta = _copy_value(servicio.tecnologia_corta)
+    if not zona or not tecnologia or tecnologia_corta == "TEC":
+        return ""
+    return f"RBD_{servicio.rbd}_{_zona_corta(zona)}_{tecnologia_corta}"
+
+
+def _contact_copy_text(contacto, orden):
+    rows = [
+        (f"NOMBRE CT{orden}", _copy_value(contacto.get("nombre"))),
+        (f"TELEFONO CT{orden}", _copy_value(contacto.get("telefono"))),
+        (f"CELULAR CT{orden}", _copy_value(contacto.get("celular"))),
+        (f"MAIL CT{orden}", _copy_value(contacto.get("email"))),
+        (f"CARGO CT{orden}", _copy_value(contacto.get("cargo"))),
+    ]
+    return "\n".join(f"{label}\t{value}" for label, value in rows if value)
+
+
 def _empty_contact(orden):
-    return {
+    contacto = {
         "orden": orden,
         "role": f"Contacto {orden}",
         "nombre": "",
@@ -97,12 +126,14 @@ def _empty_contact(orden):
             _item("Cargo", ""),
         ],
     }
+    contacto["copy_text"] = _contact_copy_text(contacto, orden)
+    return contacto
 
 
 def _contact_from_model(contacto, orden):
     if not contacto:
         return _empty_contact(orden)
-    return {
+    contacto_data = {
         "orden": orden,
         "role": f"Contacto {orden}",
         "nombre": contacto.nombre,
@@ -118,6 +149,8 @@ def _contact_from_model(contacto, orden):
             _item("Cargo", contacto.cargo),
         ],
     }
+    contacto_data["copy_text"] = _contact_copy_text(contacto_data, orden)
+    return contacto_data
 
 
 def _contacts_for_service(servicio):
@@ -126,40 +159,37 @@ def _contacts_for_service(servicio):
 
 
 def _full_copy_rows(servicio, contactos):
-    contacto_1, contacto_2, contacto_3, contacto_4 = contactos
-    rows = [
-        ("RBD/ZONA/TECNOLOGIA", f"RBD_{servicio.rbd}_{_zona_corta(servicio.zona)}_{servicio.tecnologia_corta}"),
-        ("NOMBRE", _plain(servicio.nombre_establecimiento)),
-        ("DIRECCION", _plain(servicio.direccion)),
-        ("COMUNA", _plain(servicio.localidad)),
-        ("REGION", _plain(servicio.region)),
-        ("", ""),
-        ("MOTIVO", "SIN SERVICIO"),
-        ("", ""),
-        ("NOMBRE CT1", _plain(contacto_1["nombre"])),
-        ("TELEFONO CT1", _plain(contacto_1["telefono"])),
-        ("CELULAR CT1", _plain(contacto_1["celular"])),
-        ("MAIL CT1", _plain(contacto_1["email"])),
-        ("CARGO CT1", _plain(contacto_1["cargo"])),
-        ("", ""),
-        ("NOMBRE CT2", _plain(contacto_2["nombre"])),
-        ("TELEFONO CT2", _plain(contacto_2["telefono"])),
-        ("CELULAR CT2", _plain(contacto_2["celular"])),
-        ("MAIL CT2", _plain(contacto_2["email"])),
-        ("CARGO CT2", _plain(contacto_2["cargo"])),
-        ("", ""),
-        ("NOMBRE CT3", _plain(contacto_3["nombre"])),
-        ("TELEFONO CT3", _plain(contacto_3["telefono"])),
-        ("CELULAR CT3", _plain(contacto_3["celular"])),
-        ("MAIL CT3", _plain(contacto_3["email"])),
-        ("CARGO CT3", _plain(contacto_3["cargo"])),
-        ("", ""),
-        ("NOMBRE CT4", _plain(contacto_4["nombre"])),
-        ("TELEFONO CT4", _plain(contacto_4["telefono"])),
-        ("CELULAR CT4", _plain(contacto_4["celular"])),
-        ("MAIL CT4", _plain(contacto_4["email"])),
-        ("CARGO CT4", _plain(contacto_4["cargo"])),
-    ]
+    def append_if_value(rows, label, value):
+        value = _copy_value(value)
+        if value:
+            rows.append((label, value))
+
+    def append_gap(rows):
+        if rows and rows[-1] != ("", ""):
+            rows.append(("", ""))
+
+    rows = []
+    append_if_value(rows, "RBD/ZONA/TECNOLOGIA", _rbd_zona_tecnologia(servicio))
+    append_if_value(rows, "NOMBRE", servicio.nombre_establecimiento)
+    append_if_value(rows, "DIRECCION", servicio.direccion)
+    append_if_value(rows, "COMUNA", servicio.localidad)
+    append_if_value(rows, "REGION", servicio.region)
+    append_gap(rows)
+    append_if_value(rows, "MOTIVO", "SIN SERVICIO")
+
+    for contacto in contactos:
+        contacto_rows = []
+        append_if_value(contacto_rows, f"NOMBRE CT{contacto['orden']}", contacto["nombre"])
+        append_if_value(contacto_rows, f"TELEFONO CT{contacto['orden']}", contacto["telefono"])
+        append_if_value(contacto_rows, f"CELULAR CT{contacto['orden']}", contacto["celular"])
+        append_if_value(contacto_rows, f"MAIL CT{contacto['orden']}", contacto["email"])
+        append_if_value(contacto_rows, f"CARGO CT{contacto['orden']}", contacto["cargo"])
+        if contacto_rows:
+            append_gap(rows)
+            rows.extend(contacto_rows)
+
+    if rows and rows[-1] == ("", ""):
+        rows.pop()
     return [{"label": label, "value": value} for label, value in rows]
 
 

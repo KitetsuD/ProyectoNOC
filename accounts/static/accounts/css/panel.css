@@ -3597,6 +3597,45 @@ a {
   color: #4167b5;
 }
 
+.rbd-contact-title-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.rbd-contact-copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 0 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.rbd-contact-copy-button:hover,
+.rbd-contact-copy-button:focus,
+.rbd-contact-copy-button.copied {
+  border-color: #93c5fd;
+  background: #dbeafe;
+}
+
+.rbd-contact-copy-button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
 .rbd-contact-edit-toggle {
   min-height: 30px;
   border: 1px solid #99f6e4;
