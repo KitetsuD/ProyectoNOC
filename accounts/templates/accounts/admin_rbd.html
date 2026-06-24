@@ -74,6 +74,12 @@
                   <div class="noc-user-actions">
                     <a class="noc-user-action" href="{% url 'admin_rbd_editar' servicio.id %}">Editar</a>
                     <a class="noc-user-action" href="{% url 'rbd:buscar' %}?rbd={{ servicio.rbd }}">Ver ficha</a>
+                    <form method="post" action="{% url 'admin_rbd_eliminar' servicio.id %}" onsubmit="return confirm('Eliminar completamente el RBD {{ servicio.rbd }}? Esta accion tambien elimina sus contactos asociados.');">
+                      {% csrf_token %}
+                      <button class="noc-user-action is-danger" type="submit">
+                        Eliminar
+                      </button>
+                    </form>
                   </div>
                 </td>
               </tr>

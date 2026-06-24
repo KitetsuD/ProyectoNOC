@@ -5762,6 +5762,54 @@ a {
   color: #991b1b;
 }
 
+.rbd-delete-panel {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+
+.rbd-delete-panel .noc-admin-panel-head {
+  border-bottom-color: #fecaca;
+  background: #fff1f2;
+}
+
+.rbd-delete-panel .noc-admin-panel-head span,
+.rbd-delete-panel .noc-admin-panel-head h2 {
+  color: #991b1b;
+}
+
+.rbd-delete-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+}
+
+.rbd-delete-body p {
+  margin: 0;
+  max-width: 760px;
+  color: #7f1d1d;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.rbd-delete-body form {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 760px) {
+  .rbd-delete-body {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rbd-delete-body .danger-button {
+    width: 100%;
+  }
+}
+
 .noc-users-empty {
   padding: 16px 0;
   color: #64748b;

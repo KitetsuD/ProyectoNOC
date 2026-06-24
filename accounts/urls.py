@@ -31,6 +31,7 @@ urlpatterns = [
     path("administracion/tutoriales/documento-base/", views.admin_tutoriales_documento_base, name="admin_tutoriales_documento_base"),
     path("administracion/rbd/", views.admin_rbd, name="admin_rbd"),
     path("administracion/rbd/<int:servicio_id>/editar/", views.admin_rbd_editar, name="admin_rbd_editar"),
+    path("administracion/rbd/<int:servicio_id>/eliminar/", views.admin_rbd_eliminar, name="admin_rbd_eliminar"),
     path("administracion/usuarios/", views.admin_usuarios, name="admin_usuarios"),
     path("administracion/usuarios/nuevo/", views.admin_usuario_crear, name="admin_usuario_crear"),
     path("administracion/usuarios/<int:user_id>/editar/", views.admin_usuario_editar, name="admin_usuario_editar"),

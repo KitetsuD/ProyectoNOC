@@ -808,6 +808,22 @@ def admin_rbd_editar(request, servicio_id):
 
 
 @_admin_required
+def admin_rbd_eliminar(request, servicio_id):
+    servicio = get_object_or_404(RbdServicio, pk=servicio_id)
+    if request.method != "POST":
+        messages.error(request, "La eliminacion de un RBD debe realizarse desde el formulario de confirmacion.")
+        return redirect(f"{reverse('admin_rbd')}?q={servicio.rbd}")
+
+    rbd = servicio.rbd
+    nombre = servicio.nombre_establecimiento or "Sin nombre"
+    contactos = servicio.contactos.count()
+    servicio.delete()
+    detalle_contactos = f" y {contactos} contacto(s)" if contactos else ""
+    messages.success(request, f"RBD {rbd} - {nombre} eliminado correctamente{detalle_contactos}.")
+    return redirect("admin_rbd")
+
+
+@_admin_required
 def admin_usuarios(request):
     User = get_user_model()
     usuarios = list(User.objects.prefetch_related("groups").order_by("-is_staff", "-is_active", "username"))

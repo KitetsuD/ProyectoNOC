@@ -48,5 +48,21 @@
         </div>
       </form>
     </section>
+
+    <section class="noc-admin-panel rbd-delete-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>Zona critica</span>
+          <h2>Eliminar RBD completo</h2>
+        </div>
+      </div>
+      <div class="rbd-delete-body">
+        <p>Esta accion elimina el RBD {{ servicio.rbd }} y sus contactos asociados. No elimina registros historicos de bitacora, SICRET o SAGEC.</p>
+        <form method="post" action="{% url 'admin_rbd_eliminar' servicio.id %}" onsubmit="return confirm('Eliminar completamente el RBD {{ servicio.rbd }}? Esta accion no se puede deshacer.');">
+          {% csrf_token %}
+          <button class="danger-button" type="submit">Eliminar RBD</button>
+        </form>
+      </div>
+    </section>
   </section>
 {% endblock %}
