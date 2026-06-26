@@ -232,7 +232,7 @@ def _build_detail(servicio):
         "contactos": contactos,
         "jornada_clase": _jornada_clase(servicio),
         "copiar_completo": copiar_completo,
-        "copiar_completo_texto": "\n".join(f"{row['label']}\t{row['value']}" for row in copiar_completo),
+        "copiar_completo_texto": "\n".join(row["value"] for row in copiar_completo),
     }
 
 
