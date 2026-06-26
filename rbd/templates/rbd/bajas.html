@@ -1,0 +1,126 @@
+{% extends base_template|default:"accounts/base_panel.html" %}
+
+{% block titulo %}Bajas RBD | ProyectoNOC{% endblock %}
+{% block encabezado %}Bajas RBD{% endblock %}
+{% block menu_rbd %}{% endblock %}
+{% block menu_rbd_bajas %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="noc-admin-page rbd-bajas-page">
+    <section class="ops-hero">
+      <div>
+        <span>Servicios dados de baja</span>
+        <h2>Bajas RBD</h2>
+        <p>Consulta los servicios que fueron retirados de la busqueda activa.</p>
+      </div>
+      <div class="ops-hero-metrics">
+        <article>
+          <span>Total bajas</span>
+          <strong>{{ total_bajas }}</strong>
+        </article>
+        <article>
+          <span>Resultados</span>
+          <strong>{{ total_resultados }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>Busqueda</span>
+          <h2>Servicios dados de baja</h2>
+        </div>
+      </div>
+      <form class="noc-admin-upload-form" method="get">
+        <div class="noc-admin-form-grid noc-admin-form-grid-single">
+          <div class="noc-admin-field">
+            <label for="id_q">Buscar</label>
+            <input class="admin-control" id="id_q" name="q" value="{{ termino }}" placeholder="RBD, BPI, escuela, EF o IP" autocomplete="off">
+          </div>
+        </div>
+        <div class="noc-admin-actions">
+          <button class="primary-button" type="submit">Buscar</button>
+          {% if termino %}
+            <a class="ghost-button" href="{% url 'rbd:bajas' %}">Limpiar</a>
+          {% endif %}
+        </div>
+      </form>
+    </section>
+
+    <section class="noc-users-panel">
+      <div class="noc-users-panel-head">
+        <div>
+          <span>Listado</span>
+          <h2>{% if termino %}Resultados para "{{ termino }}"{% else %}Ultimas bajas{% endif %}</h2>
+        </div>
+      </div>
+      <div class="noc-users-table-wrap">
+        <table class="noc-users-table rbd-bajas-table">
+          <thead>
+            <tr>
+              <th>RBD</th>
+              <th>Establecimiento</th>
+              <th>BPI</th>
+              <th>Servicio</th>
+              <th>Documento</th>
+              <th>Observacion</th>
+              <th>Baja</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for servicio in servicios %}
+              <tr>
+                <td><strong>{{ servicio.rbd }}</strong></td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.nombre_establecimiento|default:"Sin nombre" }}</strong>
+                    <small>{{ servicio.localidad|default:"Sin comuna" }}{% if servicio.region %} - {{ servicio.region }}{% endif %}</small>
+                  </div>
+                </td>
+                <td>{{ servicio.bpi|default:"Sin informacion" }}</td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.tecnologia_resumen }}</strong>
+                    <small>Partner: {{ servicio.baja_partner|default:"Sin informacion" }}</small>
+                    <small>EF: {{ servicio.codigo_servicio_oss|default:"Sin informacion" }}{% if servicio.ip %} / IP: {{ servicio.ip }}{% endif %}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.baja_decreto|default:"Sin documento" }}</strong>
+                    <small>{% if servicio.baja_notificacion_fecha %}Notificado: {{ servicio.baja_notificacion_fecha|date:"d/m/Y" }}{% else %}Fecha no informada{% endif %}</small>
+                    {% if servicio.baja_ov %}<small>OV: {{ servicio.baja_ov }}</small>{% endif %}
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.baja_observacion_mineduc|default:"Sin observacion Mineduc" }}</strong>
+                    {% if servicio.baja_observacion %}<small>{{ servicio.baja_observacion }}</small>{% endif %}
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.baja_fecha|date:"d/m/Y H:i"|default:"Fecha no informada" }}</strong>
+                    <small>{% if servicio.baja_por %}Por {{ servicio.baja_por.username }}{% else %}Usuario no informado{% endif %}</small>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7">
+                  <div class="noc-users-empty">
+                    {% if termino %}No hay bajas que coincidan con la busqueda.{% else %}Aun no hay servicios dados de baja.{% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if total_resultados > 300 %}
+        <p class="rbd-bajas-limit">Mostrando los primeros 300 registros. Usa la busqueda para acotar el resultado.</p>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

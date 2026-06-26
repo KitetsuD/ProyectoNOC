@@ -5469,6 +5469,27 @@ a {
   background: #fee2e2;
 }
 
+.warning-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.warning-button:hover,
+.warning-button:focus {
+  border-color: #f59e0b;
+  background: #fef3c7;
+}
+
 @media (max-width: 1280px) {
   .noc-admin-data-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5721,6 +5742,22 @@ a {
   margin: 0;
 }
 
+.rbd-id-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rbd-id-actions form {
+  margin: 0;
+}
+
+.rbd-id-actions .noc-user-action {
+  min-height: 30px;
+  padding: 0 9px;
+}
+
 .noc-user-action {
   display: inline-flex;
   align-items: center;
@@ -5760,6 +5797,22 @@ a {
   border-color: #fecaca;
   background: #fff1f2;
   color: #991b1b;
+}
+
+.rbd-baja-panel {
+  border-color: #fde68a;
+  background: #fffdf5;
+}
+
+.rbd-baja-panel .noc-admin-panel-head {
+  border-bottom-color: #fde68a;
+  background: #fffbeb;
+}
+
+.rbd-baja-panel .noc-admin-panel-head span,
+.rbd-baja-panel .noc-admin-panel-head h2,
+.rbd-baja-panel .rbd-delete-body p {
+  color: #92400e;
 }
 
 .rbd-delete-panel {
@@ -5808,6 +5861,81 @@ a {
   .rbd-delete-body .danger-button {
     width: 100%;
   }
+
+  .rbd-delete-body .warning-button {
+    width: 100%;
+  }
+}
+
+.rbd-bajas-page .noc-users-panel {
+  overflow: hidden;
+}
+
+.rbd-bajas-table td {
+  vertical-align: top;
+}
+
+.rbd-bajas-table {
+  min-width: 1320px;
+}
+
+.rbd-bajas-limit {
+  margin: 0;
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.rbd-bajas-upload-result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid #e2e8f0;
+  padding: 14px 18px;
+  background: #f8fbff;
+}
+
+.rbd-bajas-upload-result strong,
+.rbd-bajas-upload-result span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 0 11px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.rbd-bajas-upload-result strong {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.rbd-bajas-upload-result span {
+  background: #ecfdf5;
+  color: #0f766e;
+}
+
+.rbd-history-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.rbd-history-action-baja {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.rbd-history-action-eliminado {
+  background: #fff1f2;
+  color: #991b1b;
 }
 
 .noc-users-empty {

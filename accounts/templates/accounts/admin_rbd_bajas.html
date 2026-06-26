@@ -1,0 +1,133 @@
+{% extends "accounts/base_panel.html" %}
+
+{% block titulo %}RBD Bajas Admin | ProyectoNOC{% endblock %}
+{% block encabezado %}RBD Bajas Admin{% endblock %}
+{% block menu_admin_rbd_bajas %}activo{% endblock %}
+
+{% block contenido %}
+  <section class="noc-admin-page">
+    <section class="ops-hero">
+      <div>
+        <span>ADMIN</span>
+        <h2>Servicios dados de baja</h2>
+        <p>Administra los RBD retirados de la busqueda activa y elimina definitivamente solo cuando corresponda.</p>
+      </div>
+      <div class="ops-hero-metrics">
+        <article>
+          <span>Total bajas</span>
+          <strong>{{ total_bajas }}</strong>
+        </article>
+        <article>
+          <span>Resultados</span>
+          <strong>{{ total_resultados }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>Busqueda</span>
+          <h2>RBD dados de baja</h2>
+        </div>
+        <a class="ghost-button" href="{% url 'rbd:bajas' %}">Vista operadores</a>
+      </div>
+      <form class="noc-admin-upload-form" method="get">
+        <div class="noc-admin-form-grid noc-admin-form-grid-single">
+          <div class="noc-admin-field">
+            <label for="id_q">Buscar</label>
+            <input class="admin-control" id="id_q" name="q" value="{{ query }}" placeholder="RBD, BPI, colegio, EF, IP, decreto u OV" autocomplete="off">
+          </div>
+        </div>
+        <div class="noc-admin-actions">
+          <button class="primary-button" type="submit">Buscar</button>
+          {% if query %}
+            <a class="ghost-button" href="{% url 'admin_rbd_bajas' %}">Limpiar</a>
+          {% endif %}
+        </div>
+      </form>
+    </section>
+
+    <section class="noc-users-panel">
+      <div class="noc-users-panel-head">
+        <div>
+          <span>Bajas</span>
+          <h2>{% if query %}Resultados para "{{ query }}"{% else %}Ultimas bajas registradas{% endif %}</h2>
+        </div>
+      </div>
+      <div class="noc-users-table-wrap">
+        <table class="noc-users-table rbd-bajas-table">
+          <thead>
+            <tr>
+              <th>RBD</th>
+              <th>Establecimiento</th>
+              <th>Servicio</th>
+              <th>Documento baja</th>
+              <th>Registro</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for servicio in servicios %}
+              <tr>
+                <td>
+                  <div class="rbd-id-actions">
+                    <strong>{{ servicio.rbd }}</strong>
+                    <form method="post" action="{% url 'admin_rbd_eliminar' servicio.id %}" onsubmit="return confirm('Eliminar definitivamente el RBD {{ servicio.rbd }}? Quedara registro en historico, pero el RBD y sus contactos seran borrados.');">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="admin_rbd_bajas">
+                      <button class="noc-user-action is-danger" type="submit">Eliminar</button>
+                    </form>
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.nombre_establecimiento|default:"Sin nombre" }}</strong>
+                    <small>{{ servicio.localidad|default:"Sin comuna" }}{% if servicio.region %} - {{ servicio.region }}{% endif %}</small>
+                    <small>{{ servicio.direccion|default:"Sin direccion" }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.tecnologia_resumen }}</strong>
+                    <small>BPI: {{ servicio.bpi|default:"Sin informacion" }}</small>
+                    <small>EF: {{ servicio.codigo_servicio_oss|default:"Sin informacion" }}{% if servicio.ip %} / IP: {{ servicio.ip }}{% endif %}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.baja_decreto|default:"Sin documento" }}</strong>
+                    <small>Partner: {{ servicio.baja_partner|default:"Sin informacion" }}</small>
+                    {% if servicio.baja_ov %}<small>OV: {{ servicio.baja_ov }}</small>{% endif %}
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-meta">
+                    <strong>{{ servicio.baja_fecha|date:"d/m/Y H:i"|default:"Fecha no informada" }}</strong>
+                    <small>{% if servicio.baja_por %}Por {{ servicio.baja_por.username }}{% else %}Usuario no informado{% endif %}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="noc-user-actions">
+                    <a class="noc-user-action" href="{% url 'admin_rbd_editar' servicio.id %}">Editar</a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6">
+                  <div class="noc-users-empty">
+                    {% if query %}Sin bajas para la busqueda indicada.{% else %}Aun no hay RBD dados de baja.{% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if total_resultados > 250 %}
+        <p class="rbd-bajas-limit">Mostrando los primeros 250 registros. Usa la busqueda para acotar el resultado.</p>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

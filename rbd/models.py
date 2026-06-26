@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -44,6 +45,21 @@ class RbdServicio(models.Model):
     orden_venta = models.CharField(max_length=120, blank=True)
     estado_ov = models.CharField(max_length=120, blank=True)
     bpi = models.CharField(max_length=200, blank=True)
+    dado_baja = models.BooleanField(default=False, db_index=True)
+    baja_fecha = models.DateTimeField(null=True, blank=True)
+    baja_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="rbd_servicios_dados_baja",
+    )
+    baja_partner = models.CharField(max_length=120, blank=True)
+    baja_observacion_mineduc = models.CharField(max_length=255, blank=True)
+    baja_decreto = models.CharField(max_length=180, blank=True)
+    baja_notificacion_fecha = models.DateField(null=True, blank=True)
+    baja_ov = models.CharField(max_length=120, blank=True)
+    baja_observacion = models.TextField(blank=True)
     datos = models.JSONField(default=dict, blank=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
@@ -106,3 +122,41 @@ class RbdContacto(models.Model):
     def __str__(self):
         nombre = self.nombre or "Sin nombre"
         return f"RBD {self.servicio.rbd} - Contacto {self.orden}: {nombre}"
+
+
+class RbdHistorial(models.Model):
+    ACCION_BAJA = "baja"
+    ACCION_ELIMINADO = "eliminado"
+    ACCIONES = (
+        (ACCION_BAJA, "Dado de baja"),
+        (ACCION_ELIMINADO, "Eliminado"),
+    )
+
+    accion = models.CharField(max_length=20, choices=ACCIONES, db_index=True)
+    rbd = models.PositiveIntegerField(db_index=True)
+    nombre_establecimiento = models.CharField(max_length=255, blank=True)
+    bpi = models.CharField(max_length=200, blank=True)
+    codigo_servicio_oss = models.CharField(max_length=140, blank=True)
+    ip = models.CharField(max_length=80, blank=True)
+    tecnologia = models.CharField(max_length=120, blank=True)
+    zona = models.CharField(max_length=40, blank=True)
+    localidad = models.CharField(max_length=120, blank=True)
+    region = models.CharField(max_length=120, blank=True)
+    detalle = models.TextField(blank=True)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="rbd_historial_acciones",
+    )
+    snapshot = models.JSONField(default=dict, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-creado_en", "-id")
+        verbose_name = "historial RBD"
+        verbose_name_plural = "historial RBD"
+
+    def __str__(self):
+        return f"{self.get_accion_display()} RBD {self.rbd}"

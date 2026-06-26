@@ -10,9 +10,53 @@
       <div>
         <span>ADMIN</span>
         <h2>Administracion RBD</h2>
-        <p>Busca por numero de RBD o BPI para modificar la informacion cargada.</p>
+        <p>Busca por numero de RBD o BPI para modificar informacion, dar de baja servicios o cargar bajas masivas.</p>
       </div>
-      <strong class="ops-admin-chip">{{ total_rbd }} registros</strong>
+      <div class="ops-hero-metrics">
+        <article>
+          <span>Activos</span>
+          <strong>{{ total_rbd }}</strong>
+        </article>
+        <article>
+          <span>Dados de baja</span>
+          <strong>{{ total_bajas }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>Bajas masivas</span>
+          <h2>Cargar Excel de bajas</h2>
+        </div>
+        <a class="ghost-button" href="{% url 'admin_rbd_bajas' %}">Administrar bajas</a>
+      </div>
+      <form class="noc-admin-upload-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="cargar_bajas">
+        <div class="noc-admin-form-grid noc-admin-form-grid-single">
+          <div class="noc-admin-field{% if bajas_form.archivo.errors %} has-error{% endif %}">
+            <label for="{{ bajas_form.archivo.id_for_label }}">{{ bajas_form.archivo.label }}</label>
+            {{ bajas_form.archivo }}
+            {% for error in bajas_form.archivo.errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="noc-admin-actions">
+          <button class="primary-button" type="submit">Cargar bajas</button>
+        </div>
+      </form>
+      {% if resultado_bajas %}
+        <div class="rbd-bajas-upload-result">
+          <strong>Resumen de carga</strong>
+          <span>Creados como baja: {{ resultado_bajas.creados }}</span>
+          <span>Marcados como baja: {{ resultado_bajas.actualizados }}</span>
+          <span>Ya estaban de baja: {{ resultado_bajas.ya_baja }}</span>
+          <span>Filas omitidas: {{ resultado_bajas.omitidos }}</span>
+        </div>
+      {% endif %}
     </section>
 
     <section class="noc-admin-panel">
@@ -56,7 +100,17 @@
           <tbody>
             {% for servicio in resultados %}
               <tr>
-                <td><strong>{{ servicio.rbd }}</strong></td>
+                <td>
+                  <div class="rbd-id-actions">
+                    <strong>{{ servicio.rbd }}</strong>
+                    <form method="post" action="{% url 'admin_rbd_eliminar' servicio.id %}" onsubmit="return confirm('Eliminar definitivamente el RBD {{ servicio.rbd }}? Esta accion tambien eliminara sus contactos asociados.');">
+                      {% csrf_token %}
+                      <button class="noc-user-action is-danger" type="submit">
+                        Eliminar
+                      </button>
+                    </form>
+                  </div>
+                </td>
                 <td>
                   <div class="noc-user-meta">
                     <strong>{{ servicio.nombre_establecimiento|default:"Sin nombre" }}</strong>
@@ -74,10 +128,10 @@
                   <div class="noc-user-actions">
                     <a class="noc-user-action" href="{% url 'admin_rbd_editar' servicio.id %}">Editar</a>
                     <a class="noc-user-action" href="{% url 'rbd:buscar' %}?rbd={{ servicio.rbd }}">Ver ficha</a>
-                    <form method="post" action="{% url 'admin_rbd_eliminar' servicio.id %}" onsubmit="return confirm('Eliminar completamente el RBD {{ servicio.rbd }}? Esta accion tambien elimina sus contactos asociados.');">
+                    <form method="post" action="{% url 'admin_rbd_dar_baja' servicio.id %}" onsubmit="return confirm('Dar de baja el RBD {{ servicio.rbd }}? El servicio dejara de aparecer en la consulta activa y quedara en Bajas RBD.');">
                       {% csrf_token %}
-                      <button class="noc-user-action is-danger" type="submit">
-                        Eliminar
+                      <button class="noc-user-action is-warning" type="submit">
+                        Dar de baja
                       </button>
                     </form>
                   </div>

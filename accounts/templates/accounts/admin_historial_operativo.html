@@ -1,7 +1,7 @@
 {% extends "accounts/base_panel.html" %}
 
-{% block titulo %}Historial cerrado | ProyectoNOC{% endblock %}
-{% block encabezado %}Historial cerrado{% endblock %}
+{% block titulo %}Registros historicos | ProyectoNOC{% endblock %}
+{% block encabezado %}Registros historicos{% endblock %}
 {% block menu_admin_historial %}activo{% endblock %}
 
 {% block contenido %}
@@ -10,13 +10,13 @@
       <div class="noc-admin-panel-head">
         <div>
           <span>ADMIN</span>
-          <h2>Tickets cerrados y llamadas realizadas</h2>
+          <h2>Registro historico operativo</h2>
         </div>
       </div>
       <form class="sicret-ticket-filters" method="get">
         <label>
           <span>Buscar</span>
-          <input class="sicret-control" type="search" name="q" value="{{ query }}" placeholder="Ticket, SICRET, SAGEC, RBD, escuela, IP o usuario">
+          <input class="sicret-control" type="search" name="q" value="{{ query }}" placeholder="Ticket, SICRET, SAGEC, RBD, escuela, IP, BPI o usuario">
         </label>
         <div class="sicret-filter-actions">
           <button class="primary-button" type="submit">Filtrar</button>
@@ -26,6 +26,11 @@
     </section>
 
     <section class="noc-admin-data-grid">
+      <article class="noc-admin-data-card">
+        <strong>{{ total_rbd_eventos }}</strong>
+        <span>Acciones RBD</span>
+        <small>Bajas y eliminados</small>
+      </article>
       <article class="noc-admin-data-card">
         <strong>{{ total_sicret }}</strong>
         <span>Tickets SICRET cerrados</span>
@@ -41,6 +46,65 @@
         <span>Tickets SAGEC cerrados</span>
         <small>Historico</small>
       </article>
+    </section>
+
+    <section class="noc-admin-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>RBD</span>
+          <h2>Bajas y eliminaciones</h2>
+        </div>
+      </div>
+      <div class="noc-admin-table-wrap">
+        <table class="noc-admin-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Accion</th>
+              <th>RBD / establecimiento</th>
+              <th>Servicio</th>
+              <th>Usuario</th>
+              <th>Detalle</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for evento in rbd_eventos %}
+              <tr>
+                <td>
+                  <strong>{{ evento.creado_en|date:"d/m/Y" }}</strong>
+                  <small>{{ evento.creado_en|date:"H:i" }}</small>
+                </td>
+                <td>
+                  <span class="rbd-history-action rbd-history-action-{{ evento.accion }}">
+                    {{ evento.get_accion_display }}
+                  </span>
+                </td>
+                <td>
+                  <strong>RBD {{ evento.rbd }}</strong>
+                  <small>{{ evento.nombre_establecimiento|default:"Sin nombre" }}</small>
+                  <small>{{ evento.localidad|default:"Sin comuna" }}{% if evento.region %} - {{ evento.region }}{% endif %}</small>
+                </td>
+                <td>
+                  <strong>{{ evento.tecnologia|default:"Sin servicio" }}</strong>
+                  <small>BPI: {{ evento.bpi|default:"Sin informacion" }}</small>
+                  <small>EF: {{ evento.codigo_servicio_oss|default:"Sin informacion" }}{% if evento.ip %} / IP: {{ evento.ip }}{% endif %}</small>
+                </td>
+                <td>{% if evento.usuario %}{{ evento.usuario.username }}{% else %}Usuario no informado{% endif %}</td>
+                <td>{{ evento.detalle|default:"Sin detalle"|linebreaksbr }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6">
+                  <div class="sicret-empty-state">
+                    <strong>Sin acciones RBD</strong>
+                    <span>No hay registros de bajas o eliminaciones para los filtros actuales.</span>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section class="noc-admin-panel">

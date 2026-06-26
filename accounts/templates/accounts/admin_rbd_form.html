@@ -49,18 +49,38 @@
       </form>
     </section>
 
+    <section class="noc-admin-panel rbd-baja-panel">
+      <div class="noc-admin-panel-head">
+        <div>
+          <span>Estado operativo</span>
+          <h2>Dar de baja RBD</h2>
+        </div>
+      </div>
+      <div class="rbd-delete-body">
+        {% if servicio.dado_baja %}
+          <p>Este RBD ya esta dado de baja y se encuentra disponible en el apartado Bajas RBD.</p>
+        {% else %}
+          <p>Esta accion marca el RBD {{ servicio.rbd }} como dado de baja. Dejaria de aparecer en la consulta activa, pero quedara visible en el apartado Bajas RBD para todos los usuarios.</p>
+          <form method="post" action="{% url 'admin_rbd_dar_baja' servicio.id %}" onsubmit="return confirm('Dar de baja el RBD {{ servicio.rbd }}?');">
+            {% csrf_token %}
+            <button class="warning-button" type="submit">Dar de baja</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+
     <section class="noc-admin-panel rbd-delete-panel">
       <div class="noc-admin-panel-head">
         <div>
           <span>Zona critica</span>
-          <h2>Eliminar RBD completo</h2>
+          <h2>Eliminar RBD</h2>
         </div>
       </div>
       <div class="rbd-delete-body">
-        <p>Esta accion elimina el RBD {{ servicio.rbd }} y sus contactos asociados. No elimina registros historicos de bitacora, SICRET o SAGEC.</p>
-        <form method="post" action="{% url 'admin_rbd_eliminar' servicio.id %}" onsubmit="return confirm('Eliminar completamente el RBD {{ servicio.rbd }}? Esta accion no se puede deshacer.');">
+        <p>Esta accion elimina definitivamente el RBD {{ servicio.rbd }} y sus contactos asociados. No quedara visible en Bajas RBD.</p>
+        <form method="post" action="{% url 'admin_rbd_eliminar' servicio.id %}" onsubmit="return confirm('Eliminar definitivamente el RBD {{ servicio.rbd }}? Esta accion no se puede deshacer.');">
           {% csrf_token %}
-          <button class="danger-button" type="submit">Eliminar RBD</button>
+          <button class="danger-button" type="submit">Eliminar</button>
         </form>
       </div>
     </section>

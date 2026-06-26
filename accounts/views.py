@@ -16,9 +16,11 @@ from django.urls import reverse
 from django.utils import timezone
 
 from bitacora.models import RegistroBitacora
-from rbd.forms import AdminRbdSearchForm, AdminRbdServicioForm
-from rbd.models import RbdServicio
+from rbd.forms import AdminBajasUploadForm, AdminRbdSearchForm, AdminRbdServicioForm
+from rbd.models import RbdHistorial, RbdServicio
+from rbd.services.bajas import importar_bajas_excel
 from rbd.services.carga_completa import export_carga_completa
+from rbd.services.historial import registrar_historial_rbd
 
 from .forms import AdminCargaDatosForm, AdminTutorialDocumentoForm, AdminTutorialForm, AdminUserForm, EnlaceOperativoForm, ProcedimientoForm, SagecSolicitudForm, SicretSolicitudForm
 from .models import EnlaceOperativo, Procedimiento, SolicitudSagec, SolicitudSicret
@@ -448,6 +450,8 @@ def admin_historial_operativo(request):
         "estado_sagec_actualizado_por",
     ).filter(estado_sagec=SolicitudSagec.ESTADO_SAGEC_CERRADO)
 
+    rbd_eventos = RbdHistorial.objects.select_related("usuario")
+
     if query:
         sicret_cerrados = sicret_cerrados.filter(
             Q(ticket_netcracker__icontains=query)
@@ -470,16 +474,29 @@ def admin_historial_operativo(request):
             | Q(id_falla_asociada__icontains=query)
             | Q(comentario_encargado__icontains=query)
         )
+        rbd_filtros = (
+            Q(nombre_establecimiento__icontains=query)
+            | Q(bpi__icontains=query)
+            | Q(codigo_servicio_oss__icontains=query)
+            | Q(ip__icontains=query)
+            | Q(detalle__icontains=query)
+            | Q(usuario__username__icontains=query)
+        )
+        if query.isdigit():
+            rbd_filtros |= Q(rbd=int(query))
+        rbd_eventos = rbd_eventos.filter(rbd_filtros)
 
     total_sicret = sicret_cerrados.count()
     total_llamadas = llamadas_realizadas.count()
     total_sagec = sagec_cerrados.count()
+    total_rbd_eventos = rbd_eventos.count()
 
     return render(
         request,
         "accounts/admin_historial_operativo.html",
         {
             "query": query,
+            "rbd_eventos": rbd_eventos.order_by("-creado_en")[:120],
             "sicret_cerrados": sicret_cerrados.order_by(
                 "-estado_sicret_actualizado_en",
                 "-creado_en",
@@ -496,6 +513,7 @@ def admin_historial_operativo(request):
             "total_sicret": total_sicret,
             "total_llamadas": total_llamadas,
             "total_sagec": total_sagec,
+            "total_rbd_eventos": total_rbd_eventos,
         },
     )
 
@@ -547,7 +565,7 @@ def sicret_rbd_info(request):
             status=400,
         )
 
-    servicio = RbdServicio.objects.filter(rbd=int(rbd)).first()
+    servicio = RbdServicio.objects.filter(rbd=int(rbd), dado_baja=False).first()
     if not servicio:
         return JsonResponse(
             {"encontrado": False, "mensaje": "No se encontro informacion para ese RBD."},
@@ -759,15 +777,34 @@ def admin_descargar_plantilla(request):
 @_admin_required
 def admin_rbd(request):
     form = AdminRbdSearchForm(request.GET or None)
+    bajas_form = AdminBajasUploadForm()
+    resultado_bajas = None
     resultados = RbdServicio.objects.none()
     termino = ""
     titulo_resultados = "Sin busqueda activa"
+
+    if request.method == "POST" and request.POST.get("accion") == "cargar_bajas":
+        bajas_form = AdminBajasUploadForm(request.POST, request.FILES)
+        if bajas_form.is_valid():
+            temp_path = _save_uploaded_file(bajas_form.cleaned_data["archivo"])
+            try:
+                resultado_bajas = importar_bajas_excel(temp_path, user=request.user)
+            except Exception as exc:
+                messages.error(request, f"No se pudo cargar el archivo de bajas: {exc}")
+            else:
+                messages.success(request, "Archivo de bajas procesado correctamente.")
+            finally:
+                try:
+                    os.unlink(temp_path)
+                except OSError:
+                    pass
+
     if form.is_valid():
         termino = form.cleaned_data["q"].strip()
         if termino:
-            resultados = RbdServicio.objects.filter(Q(bpi__icontains=termino)).order_by("rbd")
+            resultados = RbdServicio.objects.filter(dado_baja=False).filter(Q(bpi__icontains=termino)).order_by("rbd")
             if termino.isdigit():
-                resultados = RbdServicio.objects.filter(
+                resultados = RbdServicio.objects.filter(dado_baja=False).filter(
                     Q(rbd=int(termino)) | Q(bpi__icontains=termino)
                 ).order_by("rbd")
             titulo_resultados = f'Resultados para "{termino}"'
@@ -777,10 +814,43 @@ def admin_rbd(request):
         "accounts/admin_rbd.html",
         {
             "form": form,
+            "bajas_form": bajas_form,
+            "resultado_bajas": resultado_bajas,
             "resultados": resultados,
             "termino": termino,
             "titulo_resultados": titulo_resultados,
-            "total_rbd": RbdServicio.objects.count(),
+            "total_rbd": RbdServicio.objects.filter(dado_baja=False).count(),
+            "total_bajas": RbdServicio.objects.filter(dado_baja=True).count(),
+        },
+    )
+
+
+@_admin_required
+def admin_rbd_bajas(request):
+    query = (request.GET.get("q") or "").strip()
+    servicios = RbdServicio.objects.filter(dado_baja=True).select_related("baja_por").order_by("-baja_fecha", "rbd")
+    if query:
+        filtros = (
+            Q(nombre_establecimiento__icontains=query)
+            | Q(bpi__icontains=query)
+            | Q(codigo_servicio_oss__icontains=query)
+            | Q(ip__icontains=query)
+            | Q(baja_decreto__icontains=query)
+            | Q(baja_ov__icontains=query)
+            | Q(baja_partner__icontains=query)
+        )
+        if query.isdigit():
+            filtros |= Q(rbd=int(query))
+        servicios = servicios.filter(filtros)
+
+    return render(
+        request,
+        "accounts/admin_rbd_bajas.html",
+        {
+            "query": query,
+            "servicios": servicios[:250],
+            "total_bajas": RbdServicio.objects.filter(dado_baja=True).count(),
+            "total_resultados": servicios.count(),
         },
     )
 
@@ -808,6 +878,33 @@ def admin_rbd_editar(request, servicio_id):
 
 
 @_admin_required
+def admin_rbd_dar_baja(request, servicio_id):
+    servicio = get_object_or_404(RbdServicio, pk=servicio_id)
+    if request.method != "POST":
+        messages.error(request, "La baja de un RBD debe realizarse desde el formulario de confirmacion.")
+        return redirect(f"{reverse('admin_rbd')}?q={servicio.rbd}")
+
+    rbd = servicio.rbd
+    nombre = servicio.nombre_establecimiento or "Sin nombre"
+    if servicio.dado_baja:
+        messages.info(request, f"RBD {rbd} ya se encontraba dado de baja.")
+        return redirect("rbd:bajas")
+
+    servicio.dado_baja = True
+    servicio.baja_fecha = timezone.now()
+    servicio.baja_por = request.user
+    servicio.save(update_fields=["dado_baja", "baja_fecha", "baja_por", "actualizado_en"])
+    registrar_historial_rbd(
+        servicio,
+        RbdHistorial.ACCION_BAJA,
+        request.user,
+        "Baja manual desde RBD Admin.",
+    )
+    messages.success(request, f"RBD {rbd} - {nombre} dado de baja correctamente.")
+    return redirect("admin_rbd")
+
+
+@_admin_required
 def admin_rbd_eliminar(request, servicio_id):
     servicio = get_object_or_404(RbdServicio, pk=servicio_id)
     if request.method != "POST":
@@ -817,9 +914,18 @@ def admin_rbd_eliminar(request, servicio_id):
     rbd = servicio.rbd
     nombre = servicio.nombre_establecimiento or "Sin nombre"
     contactos = servicio.contactos.count()
+    estaba_dado_baja = servicio.dado_baja
+    registrar_historial_rbd(
+        servicio,
+        RbdHistorial.ACCION_ELIMINADO,
+        request.user,
+        "Eliminacion definitiva desde RBD Bajas Admin." if estaba_dado_baja else "Eliminacion definitiva desde RBD Admin.",
+    )
     servicio.delete()
     detalle_contactos = f" y {contactos} contacto(s)" if contactos else ""
-    messages.success(request, f"RBD {rbd} - {nombre} eliminado correctamente{detalle_contactos}.")
+    messages.success(request, f"RBD {rbd} - {nombre} eliminado definitivamente{detalle_contactos}.")
+    if request.POST.get("next") == "admin_rbd_bajas":
+        return redirect("admin_rbd_bajas")
     return redirect("admin_rbd")
 
 

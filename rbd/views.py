@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db.models import Q
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -299,7 +300,7 @@ def buscar_rbd(request):
     }
 
     if raw_rbd and form.is_valid():
-        resultado = RbdServicio.objects.filter(rbd=form.cleaned_data["rbd"]).first()
+        resultado = RbdServicio.objects.filter(rbd=form.cleaned_data["rbd"], dado_baja=False).first()
         if resultado:
             detail = _build_detail(resultado)
 
@@ -309,8 +310,33 @@ def buscar_rbd(request):
         "resultado": resultado,
         "busqueda_realizada": bool(raw_rbd),
         "rbd_consultado": raw_rbd,
-        "total_rbd": RbdServicio.objects.count(),
+        "total_rbd": RbdServicio.objects.filter(dado_baja=False).count(),
         "puede_editar_contactos": True,
         **detail,
     }
     return render(request, "rbd/buscar.html", context)
+
+
+@login_required
+def servicios_baja(request):
+    termino = (request.GET.get("q") or "").strip()
+    servicios = RbdServicio.objects.filter(dado_baja=True).select_related("baja_por").order_by("-baja_fecha", "rbd")
+    if termino:
+        filtros = (
+            Q(nombre_establecimiento__icontains=termino)
+            | Q(bpi__icontains=termino)
+            | Q(codigo_servicio_oss__icontains=termino)
+            | Q(ip__icontains=termino)
+        )
+        if termino.isdigit():
+            filtros |= Q(rbd=int(termino))
+        servicios = servicios.filter(filtros)
+
+    context = {
+        "base_template": "accounts/base_rbd_only.html" if es_solo_rbd(request.user) else "accounts/base_panel.html",
+        "servicios": servicios[:300],
+        "termino": termino,
+        "total_bajas": RbdServicio.objects.filter(dado_baja=True).count(),
+        "total_resultados": servicios.count(),
+    }
+    return render(request, "rbd/bajas.html", context)

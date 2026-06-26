@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}ProyectoNOC{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-55">
+  <link rel="stylesheet" href="{% static 'accounts/css/panel.css' %}?v=noc-60">
 </head>
 <body>
   <div class="admin-shell" id="adminShell">
@@ -37,6 +37,16 @@
               <path d="M18 17l3 3"></path>
             </svg>
             <span>RBD</span>
+          </a>
+          <a href="{% url 'rbd:bajas' %}" class="{% block menu_rbd_bajas %}{% endblock %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16"></path>
+              <path d="M4 12h16"></path>
+              <path d="M4 18h16"></path>
+              <path d="M7 6v12"></path>
+              <path d="M17 6v12"></path>
+            </svg>
+            <span>Bajas RBD</span>
           </a>
           {% if not usuario_solo_rbd %}
           <a href="{% url 'bitacora:crear' %}" class="{% block menu_bitacora %}{% endblock %}">
@@ -135,7 +145,7 @@
                 <path d="M17 17l3 3"></path>
                 <path d="M20 17l-3 3"></path>
               </svg>
-              <span>Historial cerrado</span>
+              <span>Registros historicos</span>
             </a>
             <a href="{% url 'admin_tutoriales' %}" class="{% block menu_admin_tutoriales %}{% endblock %}">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -155,6 +165,16 @@
                 <path d="M16 5v14"></path>
               </svg>
               <span>RBD Admin</span>
+            </a>
+            <a href="{% url 'admin_rbd_bajas' %}" class="{% block menu_admin_rbd_bajas %}{% endblock %}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 6h16"></path>
+                <path d="M4 12h16"></path>
+                <path d="M4 18h16"></path>
+                <path d="M7 6v12"></path>
+                <path d="M17 6v12"></path>
+              </svg>
+              <span>RBD Bajas Admin</span>
             </a>
             <a href="{% url 'admin_usuarios' %}" class="{% block menu_admin_usuarios %}{% endblock %}">
               <svg viewBox="0 0 24 24" aria-hidden="true">

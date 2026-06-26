@@ -35,6 +35,22 @@ class AdminRbdSearchForm(forms.Form):
         return value
 
 
+class AdminBajasUploadForm(forms.Form):
+    archivo = forms.FileField(
+        label="Excel de bajas",
+        widget=forms.ClearableFileInput(attrs={"class": "admin-file-input"}),
+    )
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get("archivo")
+        if not archivo:
+            return archivo
+        nombre = archivo.name.lower()
+        if not nombre.endswith((".xlsx", ".xlsm")):
+            raise forms.ValidationError("Formato no permitido. Usa un archivo .xlsx o .xlsm.")
+        return archivo
+
+
 class AdminRbdServicioForm(forms.ModelForm):
     class Meta:
         model = RbdServicio
